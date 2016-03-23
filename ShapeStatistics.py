@@ -38,7 +38,7 @@ def samplePointCloud(mesh, N):
     (Ps, Ns) = mesh.randomlySamplePoints(N)
     
     # accounting for translation-- center the point cloud on its centroid
-    centroid = np.mean(PC,1)[:, None] # 3x1 matrix with the mean of each row
+    centroid = np.mean(Ps,1)[:, None] # 3x1 matrix with the mean of each row
     Ps_centered = Ps - centroid # center the point cloud
    
     # accounting for scale-- RMS distance of each point to the origin is 1
@@ -48,9 +48,9 @@ def samplePointCloud(mesh, N):
     row_sum = np.sum(Ps_c_squared, 1) # sum across the rows to get d_i^2
     col_sum = np.sum(row_sum, 0) # sum all square distances 
     s = Math.sqrt(N/col_sum) # plug in calculated values and solve for s
-    Ns *= s # normalize by 's'
+    Ps_new = Ps_centered*s # normalize by 's'
    
-    return (Ps_centered, Ns)
+    return (Ps_new, Ns)
 
 
 #Purpose: To sample the unit sphere as evenly as possible.  The higher
