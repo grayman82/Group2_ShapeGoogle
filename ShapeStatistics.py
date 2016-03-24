@@ -36,25 +36,25 @@ def exportPointCloud(Ps, Ns, filename):
 #then scale all of the points so that the RMS distance to the origin is 1
 def samplePointCloud(mesh, N):
     (Ps, Ns) = mesh.randomlySamplePoints(N)
-    
+
     # accounting for translation-- center the point cloud on its centroid
     centroid = np.mean(Ps,1)[:, None] # 3x1 matrix with the mean of each row
     Ps_centered = Ps - centroid # center the point cloud
-   
+
     # accounting for scale-- RMS distance of each point to the origin is 1
     # re-arranging the RMS equation yields s = sqrt(N/(sum i=1 to N d_i^2))
     # d_i^2 = (x_i^2 + y_i^2 + z_i^2)^2
     Ps_c_squared = Ps_centered**2 # squares each element of the points in the point cloud
     row_sum = np.sum(Ps_c_squared, 1) # sum across the rows to get d_i^2
-    col_sum = np.sum(row_sum, 0) # sum all square distances 
+    col_sum = np.sum(row_sum, 0) # sum all square distances
     s = Math.sqrt(N/col_sum) # plug in calculated values and solve for s
     Ps_new = Ps_centered*s # normalize by 's'
-   
+
     return (Ps_new, Ns)
 
 
 #Purpose: To sample the unit sphere as evenly as possible.  The higher
-#res is, the more samples are taken on the sphere (in an exponential 
+#res is, the more samples are taken on the sphere (in an exponential
 #relationship with res).  By default, samples 66 points
 def getSphereSamples(res = 2):
     m = getSphereMesh(1, res)
@@ -79,30 +79,37 @@ def doPCA(X):
 #NShells (number of shells), RMax (maximum radius)
 #Returns: hist (histogram of length NShells)
 def getShapeHistogram(Ps, Ns, NShells, RMax):
-    hist = np.zeros(NShells)
-    
-    ##TODO: Finish this; fill in hist
-    
+    hist = np.zeros(NShells) #initialize histogram array to zeros
+    centroid = np.mean(Ps,1)[:, None] #find centroid of point cloud
+    #cArray = np.linspace(0, RMax, Nshells) #return array representing the bounds of histogram
+    Ps_centered = PS - centroid
+    interval = RMax/Ns #find the interval between shells
+    for point in Ps_centered:
+        #tempDist = numpy.linalg.norm( point - centroid) #find distance between point in PC and centroid of image
+        tempDist = numpy.linalg.norm( point) #find distance of point from centroid
+        pos = int(tempDist//interval) #determine what interval this distance falls in by integer division
+        hist[pos] += 1 #update the histogram value in this interval
     return hist
-    
+
 #Purpose: To create shape histogram with concentric spherical shells and
 #sectors within each shell, sorted in decreasing order of number of points
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals) (not needed here
-#but passed along for consistency), NShells (number of shells), 
-#RMax (maximum radius), SPoints: A 3 x S array of points sampled evenly on 
+#but passed along for consistency), NShells (number of shells),
+#RMax (maximum radius), SPoints: A 3 x S array of points sampled evenly on
 #the unit sphere (get these with the function "getSphereSamples")
 def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     NSectors = SPoints.shape[1] #A number of sectors equal to the number of
     #points sampled on the sphere
+
     #Create a 2D histogram that is NShells x NSectors
-    hist = np.zeros((NShells, NSectors))    
-    ##TODO: Finish this; fill in hist, then sort sectors in descending order   
+    hist = np.zeros((NShells, NSectors))
+    ##TODO: Finish this; fill in hist, then sort sectors in descending order
     return hist.flatten() #Flatten the 2D histogram to a 1D array
 
-#Purpose: To create shape histogram with concentric spherical shells and to 
+#Purpose: To create shape histogram with concentric spherical shells and to
 #compute the PCA eigenvalues in each shell
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals) (not needed here
-#but passed along for consistency), NShells (number of shells), 
+#but passed along for consistency), NShells (number of shells),
 #RMax (maximum radius), sphereRes: An integer specifying points on thes phere
 #to be used to cluster shells
 def getShapeHistogramPCA(Ps, Ns, NShells, RMax):
@@ -114,7 +121,7 @@ def getShapeHistogramPCA(Ps, Ns, NShells, RMax):
 #Purpose: To create shape histogram of the pairwise Euclidean distances between
 #randomly sampled points in the point cloud
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals) (not needed here
-#but passed along for consistency), DMax (Maximum distance to consider), 
+#but passed along for consistency), DMax (Maximum distance to consider),
 #NBins (number of histogram bins), NSamples (number of pairs of points sample
 #to compute distances)
 def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
@@ -125,7 +132,7 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
 #Purpose: To create shape histogram of the angles between randomly sampled
 #triples of points
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals) (not needed here
-#but passed along for consistency), NBins (number of histogram bins), 
+#but passed along for consistency), NBins (number of histogram bins),
 #NSamples (number of triples of points sample to compute angles)
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
@@ -134,8 +141,8 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
 
 #Purpose: To create the Extended Gaussian Image by binning normals to
 #sphere directions after rotating the point cloud to align with its principal axes
-#Inputs: Ps (3 x N point cloud) (use to compute PCA), Ns (3 x N array of normals), 
-#SPoints: A 3 x S array of points sampled evenly on the unit sphere used to 
+#Inputs: Ps (3 x N point cloud) (use to compute PCA), Ns (3 x N array of normals),
+#SPoints: A 3 x S array of points sampled evenly on the unit sphere used to
 #bin the normals
 def getEGIHistogram(Ps, Ns, SPoints):
     S = SPoints.shape[1]
@@ -144,7 +151,7 @@ def getEGIHistogram(Ps, Ns, SPoints):
     return hist
 
 #Purpose: To create an image which stores the amalgamation of rotating
-#a bunch of planes around the largest principal axis of a point cloud and 
+#a bunch of planes around the largest principal axis of a point cloud and
 #projecting the points on the minor axes onto the image.
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals, not needed here),
 #NAngles: The number of angles between 0 and 2*pi through which to rotate
@@ -159,15 +166,15 @@ def getSpinImage(Ps, Ns, NAngles, Extent, Dim):
 
 #Purpose: To create a histogram of spherical harmonic magnitudes in concentric
 #spheres after rasterizing the point cloud to a voxel grid
-#Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals, not used here), 
+#Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals, not used here),
 #VoxelRes: The number of voxels along each axis (for instance, if 30, then rasterize
-#to 30x30x30 voxels), Extent: The number of units along each axis (if 2, then 
+#to 30x30x30 voxels), Extent: The number of units along each axis (if 2, then
 #rasterize in the box [-1, 1] x [-1, 1] x [-1, 1]), NHarmonics: The number of spherical
 #harmonics, NSpheres, the number of concentric spheres to take
 def getSphericalHarmonicMagnitudes(Ps, Ns, VoxelRes, Extent, NHarmonics, NSpheres):
     hist = np.zeros((NSpheres, NHarmonics))
     #TODO: Finish this
-    
+
     return hist.flatten()
 
 #Purpose: Utility function for wrapping around the statistics functions.
@@ -255,7 +262,7 @@ def compareHistsEMD1D(AllHists):
 def getMyShapeDistances(PointClouds, Normals):
     #TODO: Finish this
     #This is just an example, but you should experiment to find which features
-    #work the best, and possibly come up with a weighted combination of 
+    #work the best, and possibly come up with a weighted combination of
     #different features
     HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
     DEuc = compareHistsEuclidean(HistsD2)
@@ -273,7 +280,7 @@ def getMyShapeDistances(PointClouds, Normals):
 #there are "NPerClass" point clouds per each class (for the dataset provided
 #there are 10 per class so that's the default argument).  So the program should
 #return a precision recall graph that has 9 elements
-#Returns PR, an (NPerClass-1) length array of average precision values for all 
+#Returns PR, an (NPerClass-1) length array of average precision values for all
 #recalls
 def getPrecisionRecall(D, NPerClass = 10):
     PR = np.zeros(NPerClass-1)
@@ -285,7 +292,7 @@ def getPrecisionRecall(D, NPerClass = 10):
 ##                     MAIN TESTS                      ##
 #########################################################
 
-if __name__ == '__main__':  
+if __name__ == '__main__':
     NRandSamples = 10000 #You can tweak this number
     np.random.seed(100) #For repeatable results randomly sampling
     #Load in and sample all meshes
@@ -302,7 +309,7 @@ if __name__ == '__main__':
             (Ps, Ns) = samplePointCloud(m, NRandSamples)
             PointClouds.append(Ps)
             Normals.append(Ps)
-    
+
     #TODO: Finish this, run experiments.  Also in the above code, you might
     #just want to load one point cloud and test your histograms on that first
     #so you don't have to wait for all point clouds to load when making
