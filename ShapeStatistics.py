@@ -48,7 +48,7 @@ def samplePointCloud(mesh, N):
     Ps_c_squared = Ps_centered**2 # squares each element of the points in the point cloud
     row_sum = np.sum(Ps_c_squared, 1) # sum across the rows to get d_i^2
     col_sum = np.sum(row_sum, 0) # sum all square distances
-    s = Math.sqrt(N/col_sum) # plug in calculated values and solve for s
+    s = (N/col_sum)**0.5 # plug in calculated values and solve for s
     Ps_new = Ps_centered*s # normalize by 's'
 
     return (Ps_new, Ns)
