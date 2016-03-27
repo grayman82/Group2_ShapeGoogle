@@ -317,19 +317,21 @@ def getPrecisionRecall(D, NPerClass = 10):
 #########################################################
 
 if __name__ == '__main__':
-    NRandSamples = 10000 #You can tweak this number
-    np.random.seed(100) #For repeatable results randomly sampling
+    m = PolyMesh()
+    m.loadFile("models_off/biplane0.off") #Load a mesh
+    (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
+    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
+    
+    
+    #NRandSamples = 10000 #You can tweak this number
+    #np.random.seed(100) #For repeatable results randomly sampling
     #Load in and sample all meshes
-    PointClouds = []
-    Normals = []
-    for i in range(len(POINTCLOUD_CLASSES)):
-        print "LOADING CLASS %i of %i..."%(i, len(POINTCLOUD_CLASSES))
-        PCClass = []
-        for j in range(NUM_PER_CLASS):
-            m = PolyMesh()
-            m.loadFile("models_off/biplane0.off") #Load a mesh
-            (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
-            exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
+    #PointClouds = []
+    #Normals = []
+    #for i in range(len(POINTCLOUD_CLASSES)):
+        #print "LOADING CLASS %i of %i..."%(i, len(POINTCLOUD_CLASSES))
+        #PCClass = []
+        #for j in range(NUM_PER_CLASS):
             #m = PolyMesh()
             #filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
             #print "Loading ", filename
