@@ -84,10 +84,11 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
     centroid = np.mean(Ps,1)[:, None] #find centroid of point cloud
     #cArray = np.linspace(0, RMax, Nshells) #return array representing the bounds of histogram
     Ps_centered = PS - centroid
-    interval = RMax/Ns #find the interval between shells
+    #intervals = np.linspace(0, RMax, NShells)
+    interval = RMax/NShells #find interval between shells
     for point in Ps_centered:
         #tempDist = numpy.linalg.norm( point - centroid) #find distance between point in PC and centroid of image
-        tempDist = numpy.linalg.norm( point) #find distance of point from centroid
+        tempDist = numpy.linalg.norm(point) #find distance of point from centroid
         pos = int(tempDist//interval) #determine what interval this distance falls in by integer division
         hist[pos] += 1 #update the histogram value in this interval
     return hist
@@ -158,7 +159,7 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
         theta = np.arccos(costheta)
         # add angle to histogram
         interval = math.pi/NBins
-        pos = int(theta/interval) # determine bin by integer division
+        pos = int(theta//interval) # determine bin by integer division
         hist[pos] += 1 #update the histogram value in this interval
     return hist
 
