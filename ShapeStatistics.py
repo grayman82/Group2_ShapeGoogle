@@ -142,7 +142,7 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
         p1 = sampledTriples[i][0] # get index of point in Ps
         p2 = sampledTriples[i][1] # get index of point in Ps
         p3 = sampledTriples[i][2] # get index of point in Ps
-        if (p1==p2 || p1==p3 || p2==p3): # check for three unique points within the sample
+        if (p1==p2 or p1==p3 or p2==p3): # check for three unique points within the sample
             continue # duplicate point; do not evaluate angle, go to next triple
         P1 = Ps[:, p1] # get point from Ps
         P2 = Ps[:, p2] # get point from Ps
