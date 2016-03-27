@@ -137,7 +137,7 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
 #NSamples (number of triples of points sample to compute angles)
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
-    sampledTriples = np.random.randomint(len(Ps[0]), size= (NSamples., 3.)) # get random point triples
+    sampledTriples = np.random.randomint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
     # account for double instances?
     for i in range (0, NSamples): 
         p1 = sampledTriples[i][0] # get index of point in Ps
@@ -327,12 +327,16 @@ if __name__ == '__main__':
         PCClass = []
         for j in range(NUM_PER_CLASS):
             m = PolyMesh()
-            filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
-            print "Loading ", filename
-            m.loadOffFileExternal(filename)
-            (Ps, Ns) = samplePointCloud(m, NRandSamples)
-            PointClouds.append(Ps)
-            Normals.append(Ps)
+            m.loadFile("models_off/biplane0.off") #Load a mesh
+            (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
+            exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
+            #m = PolyMesh()
+            #filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
+            #print "Loading ", filename
+            #m.loadOffFileExternal(filename)
+            #(Ps, Ns) = samplePointCloud(m, NRandSamples)
+            #PointClouds.append(Ps)
+            #Normals.append(Ps)
 
     #TODO: Finish this, run experiments.  Also in the above code, you might
     #just want to load one point cloud and test your histograms on that first
