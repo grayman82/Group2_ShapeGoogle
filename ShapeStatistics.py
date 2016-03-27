@@ -128,7 +128,25 @@ def getShapeHistogramPCA(Ps, Ns, NShells, RMax):
 #to compute distances)
 def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
     hist = np.zeros(NBins)
-    ##TODO: Finish this; fill in hist
+    interval = DMax/NBins # get histogram intervals
+    sampledPairs = np.random.randomint(len(Ps[0]), size = (NSamples, 2.)) # get random point pairs
+    # account for repeat pairs?
+    for i in range (0, NSamples):
+        p1 = sampledPairs[i][0] # get index of point in Ps
+        p2 = sampledPairs[i][1] # get index of point in Ps
+        if (p1 == p2): # check for two unique points within the sample
+            continue # duplicate point; do not evaluate distance, go to next pair
+        P1 = Ps[:,p1] # get point from Ps
+        P2 = Ps[:,p2] # get point from Ps
+        #calculate distance: d = [(p1_x-p2_x)^2 + (p1_y-p2_y)^2 + (p1_z-p2_z)^2] ^ 0.5
+        temp = np.subtract(P1, P2) # p1 - p2
+        temp2 = temp**2 # square each term
+        temp3 = np.sum(temp2)
+        distance = temp3**0.5 # take square root
+        # add distance to histogram
+        pos = int(distance//interval) # determine bin by integer division
+        # add check to see if pos is out of bounds?
+        hist[pos]+=1 #update the histogram value in this interval
     return hist
 
 #Purpose: To create shape histogram of the angles between randomly sampled triples of points
@@ -137,6 +155,7 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
 #NSamples (number of triples of points sample to compute angles)
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
+    interval = math.pi/NBins # get histogram intervals
     sampledTriples = np.random.randomint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
     # account for double instances?
     for i in range (0, NSamples): 
@@ -158,7 +177,6 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
         costheta = numerator/denominator
         theta = np.arccos(costheta)
         # add angle to histogram
-        interval = math.pi/NBins
         pos = int(theta//interval) # determine bin by integer division
         hist[pos] += 1 #update the histogram value in this interval
     return hist
@@ -317,10 +335,10 @@ def getPrecisionRecall(D, NPerClass = 10):
 #########################################################
 
 if __name__ == '__main__':
-    m = PolyMesh()
-    m.loadFile("models_off/biplane0.off") #Load a mesh
-    (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
-    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
+   m = PolyMesh()
+   m.loadFile("models_off/biplane0.off") #Load a mesh
+   (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
+   exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
     
     
     #NRandSamples = 10000 #You can tweak this number
