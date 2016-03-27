@@ -8,6 +8,7 @@ from PolyMesh import *
 
 import numpy as np
 import matplotlib.pyplot as plt
+import math
 
 POINTCLOUD_CLASSES = ['biplane', 'desk_chair', 'dining_chair', 'fighter_jet', 'fish', 'flying_bird', 'guitar', 'handgun', 'head', 'helicopter', 'human', 'human_arms_out', 'potted_plant', 'race_car', 'sedan', 'shelves', 'ship', 'sword', 'table', 'vase']
 
@@ -129,14 +130,36 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
     ##TODO: Finish this; fill in hist
     return hist
 
-#Purpose: To create shape histogram of the angles between randomly sampled
-#triples of points
+#Purpose: To create shape histogram of the angles between randomly sampled triples of points
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals) (not needed here
 #but passed along for consistency), NBins (number of histogram bins),
 #NSamples (number of triples of points sample to compute angles)
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
-    ##TODO: Finish this; fill in hist
+    sampledTriples = np.random.randomint(len(Ps[0]), size= (NSamples., 3.)) # get random point triples
+    # account for double instances?
+    for i in range (0, NSamples): 
+        p1 = sampledTriples[i][0] # get index of point in Ps
+        p2 = sampledTriples[i][1] # get index of point in Ps
+        p3 = sampledTriples[i][2] # get index of point in Ps
+        if (p1==p2 or p1==p3 or p2==p3): # check for three unique points within the sample
+            continue # duplicate point; do not evaluate angle, go to next triple
+        P1 = Ps[:, p1] # get point from Ps
+        P2 = Ps[:, p2] # get point from Ps
+        P3 = Ps[:, p3] # get point from Ps
+        u = np.subtract(P1, P2) # u is the vector from P2 to P1 so u = P1 - P2
+        v = np.subtraxt(P3, P2) # v is the vector prom P2 to P3 so v = P3 - P2
+        #cos (theta) = (u dot v) / (|u|*|v|)
+        unorm = np.linalg.norm(u) # |u|
+        vnorm = np.linalg.norm(v) # |v|
+        numerator = np.dot(u, v)
+        denonimator = unorm*vnorm
+        costheta = numerator/denominator
+        theta = np.arccos(costheta)
+        # add angle to histogram
+        interval = math.pi/NBins
+        pos = int(theta/interval) # determine bin by integer division
+        hist[pos] += 1 #update the histogram value in this interval
     return hist
 
 #Purpose: To create the Extended Gaussian Image by binning normals to
