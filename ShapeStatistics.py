@@ -301,9 +301,19 @@ def compareHistsCosine(AllHists):
 #Returns: D (An N x N matrix, where the ij entry is the chi squared
 #distance between the histogram for point cloud i and point cloud j)
 def compareHistsChiSquared(AllHists):
-    N = AllHists.shape[1]
+    N = AllHists.shape[1]  # number of columns aka number of point clouds / histograms
     D = np.zeros((N, N))
-    #TODO: Finish this, fill in D
+    for i in range (N): # could change this to range (N-1) for efficiency?
+        pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
+        for j in range (N): # could change this to range (i+1) for efficiency?
+            pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
+            # treat each histogram as a K-dimensional vector
+            # dist = 0.5*{(sum from k=1 to K) [ (h1[k]-h2[k])^2 / (h1[k] + h2[k]) ]}
+            numerator = (np.subtract(pc1, pc2))**2 # element-wise subtraction, element-wise square
+            denominator = np.add(pc1, pc2) # element-wise addition
+            summation = np.sum((numerator/denominator)) # element-wise division, sum over array
+            dist = 0.5*summation # scale summation by half
+            D[i][j] = dist # assign distance value for ij
     return D
 
 #Purpose: To compute the 1D Earth mover's distance between a set
