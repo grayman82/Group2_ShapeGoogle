@@ -242,6 +242,14 @@ def makeAllHistograms(PointClouds, Normals, histFunction, *args):
 ##              HISTOGRAM COMPARISONS                  ##
 #########################################################
 
+#Purpose: helper method to normalize histograms by mass
+#Inputs: hist, a 1D array of length K with the values of the histogram
+# h'[i] = h[i] / sum (from k = 1 to K) h[k]
+def normalizeHist(hist):
+    sumHist = hist.sum # sum (from k=1 to K) h[k]
+    hist_prime = hist / float(sumHist) # use broadcasting; h'[i] = h[i] / sumHist
+    return hist_prime
+    
 #Purpose: To compute the euclidean distance between a set
 #of histograms
 #Inputs: AllHists (K x N matrix of histograms, where K is the length
@@ -249,11 +257,22 @@ def makeAllHistograms(PointClouds, Normals, histFunction, *args):
 #Returns: D (An N x N matrix, where the ij entry is the Euclidean
 #distance between the histogram for point cloud i and point cloud j)
 def compareHistsEuclidean(AllHists):
-    N = AllHists.shape[1]
+    N = AllHists.shape[1] # number of columns aka number of point clouds / histograms
     D = np.zeros((N, N))
-    #TODO: Finish this, fill in D
+    # not sure if normalization is needed here
+    for i in range (N): # could change this to range (N-1) for efficiency?
+        pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
+        for j in range (N): # could change this to range (i+1) for efficiency?
+            pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
+            # treat each histogram as a K-dimensional vector
+            # dist = sqrt ( (pc1_1 - pc2_1)^2 + ... + (pc1_K - pc2_K)^2 )
+            pc1_pc2 = np.subtract(pc1, pc2) # element-wise subtraction
+            square = pc1_pc2**2 # element-wise square
+            sumOfSquares = np.sum(square) # sum the elements
+            dist = sumOfSquares**0.5 # take square root
+            D[i][j] = dist # assign distance value for ij
     return D
-
+    
 #Purpose: To compute the cosine distance between a set
 #of histograms
 #Inputs: AllHists (K x N matrix of histograms, where K is the length
