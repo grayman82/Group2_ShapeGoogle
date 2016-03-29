@@ -63,10 +63,15 @@ def getSphereSamples(res = 2):
 
 #Purpose: To compute PCA on a point cloud
 #Inputs: X (3 x N array representing a point cloud)
+#Returns: (eigs, V) where eigs are the eigenvalues sorted in decreasing order and
+#V is a 3x3 matrix with each row being the eigenvector corresponding to the eigenvalue
+#of the same index in eigs
 def doPCA(X):
-    ##TODO: Fill this in for a useful helper function
-    eigs = np.array([1, 1, 1]) #Dummy value
-    V = np.eye(3) #Dummy Value
+    A = np.dot(X, X.T)
+    (eigs, V) = np.linalg.eig(A) #retrieves eigenvalues and column matrix of eigenvectors
+    eig_tuples = zip(eigs, V.T)
+    sorted(eig_tuples, key= lambda eig_pair: -1*eig_pair[0]) #sorting eigs in decreasing order
+    (eigs, V) = zip(*eig_tuples)
     return (eigs, V)
 
 #########################################################
@@ -83,7 +88,7 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
     hist = np.zeros(NShells) #initialize histogram array to zeros
     centroid = np.mean(Ps,1)[:, None] #find centroid of point cloud
     #cArray = np.linspace(0, RMax, Nshells) #return array representing the bounds of histogram
-    Ps_centered = PS - centroid
+    Ps_centered = Ps - centroid
     #intervals = np.linspace(0, RMax, NShells)
     interval = RMax/NShells #find interval between shells
     for point in Ps_centered:
@@ -158,7 +163,7 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
     interval = math.pi/NBins # get histogram intervals
     sampledTriples = np.random.randomint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
     # account for double instances?
-    for i in range (0, NSamples): 
+    for i in range (0, NSamples):
         p1 = sampledTriples[i][0] # get index of point in Ps
         p2 = sampledTriples[i][1] # get index of point in Ps
         p3 = sampledTriples[i][2] # get index of point in Ps
@@ -249,7 +254,7 @@ def normalizeHist(hist):
     sumHist = hist.sum # sum (from k=1 to K) h[k]
     hist_prime = hist / float(sumHist) # use broadcasting; h'[i] = h[i] / sumHist
     return hist_prime
-    
+
 #Purpose: To compute the euclidean distance between a set
 #of histograms
 #Inputs: AllHists (K x N matrix of histograms, where K is the length
@@ -272,7 +277,7 @@ def compareHistsEuclidean(AllHists):
             dist = sumOfSquares**0.5 # take square root
             D[i][j] = dist # assign distance value for ij
     return D
-    
+
 #Purpose: To compute the cosine distance between a set
 #of histograms
 #Inputs: AllHists (K x N matrix of histograms, where K is the length
@@ -340,8 +345,8 @@ def compareHistsEMD1D(AllHists):
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
             summation = 0
             # treat each histogram as a K-dimensional vector
-            # dist = (sum from k = 1 to K) | hC_i[k] - hC_j[k]| 
-            for k in range (1, K+1): 
+            # dist = (sum from k = 1 to K) | hC_i[k] - hC_j[k]|
+            for k in range (1, K+1):
             # is there a way to avoid a third for-loop?
                 hC_i=hC(pc1, k) # hC_i[k]
                 hC_j=hC(pc2, k) # hC_j[k]
@@ -399,8 +404,9 @@ if __name__ == '__main__':
    m.loadFile("models_off/biplane0.off") #Load a mesh
    (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
-    
-    
+   doPCA(Ps)
+
+
     #NRandSamples = 10000 #You can tweak this number
     #np.random.seed(100) #For repeatable results randomly sampling
     #Load in and sample all meshes
