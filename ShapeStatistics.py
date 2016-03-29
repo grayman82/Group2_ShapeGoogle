@@ -262,7 +262,7 @@ def compareHistsEuclidean(AllHists):
     # not sure if normalization is needed here
     for i in range (N): # could change this to range (N-1) for efficiency?
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): # could change this to range (i+1) for efficiency?
+        for j in range (N): # could change this to range (i+1, N) for efficiency?
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
             # treat each histogram as a K-dimensional vector
             # dist = sqrt ( (pc1_1 - pc2_1)^2 + ... + (pc1_K - pc2_K)^2 )
@@ -284,7 +284,7 @@ def compareHistsCosine(AllHists):
     D = np.zeros((N, N))
     for i in range (N): # could change this to range (N-1) for efficiency?
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): # could change this to range (i+1) for efficiency?
+        for j in range (N): # could change this to range (i+1, N) for efficiency?
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
             # treat each histogram as a K-dimensional vector
             # dist = (v_i dot v_j) / (|v_i|*|v_j|)
@@ -305,7 +305,7 @@ def compareHistsChiSquared(AllHists):
     D = np.zeros((N, N))
     for i in range (N): # could change this to range (N-1) for efficiency?
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): # could change this to range (i+1) for efficiency?
+        for j in range (N): # could change this to range (i+1, N) for efficiency?
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
             # treat each histogram as a K-dimensional vector
             # dist = 0.5*{(sum from k=1 to K) [ (h1[k]-h2[k])^2 / (h1[k] + h2[k]) ]}
@@ -336,7 +336,7 @@ def compareHistsEMD1D(AllHists):
     D = np.zeros((N, N))
     for i in range (N): # could change this to range (N-1) for efficiency?
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): # could change this to range (i+1) for efficiency?
+        for j in range (N): # could change this to range (i+1, N) for efficiency?
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
             summation = 0
             # treat each histogram as a K-dimensional vector
