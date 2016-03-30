@@ -388,7 +388,7 @@ def getPrecisionRecall(D, NPerClass = 10):
     PR = np.zeros(NPerClass-1) #initialize precision value arrays with zeros
     rIn = 0 #initialize count index for number of rows
     for row in D: #for every row in the similarity matrix
-        class = rIn//NPerClass #find the class of current row. i.e since increments of NPerClass belong to same class
+        classval = rIn//NPerClass #find the class of current row. i.e since increments of NPerClass belong to same class
         #integer division should floor all values in same class to same class value e.g. 30,31,32...39 become 3
         sortRow = np.argsort(row) #sort row in question and return the indexes of values
         count = 1 #initialize count for total number of shapes looked at for now
@@ -397,7 +397,7 @@ def getPrecisionRecall(D, NPerClass = 10):
             if (rIn == entry): #If shape is being queried against itself
                 count+= 1 #increment number ofshapes looked at
                 continue #then skip this iteration
-            if (entry//NPerClass == class): #if the class of the current entry is equal to the class of querying entry do this
+            if (entry//NPerClass == classval): #if the class of the current entry is equal to the class of querying entry do this
                 precision = correct/count #calculate precision i.e. fraction of  shapes in the correct class over the fraction of shapes looked at
                 PR[correct - 1] += precision #add precision value of shape in (correct - 1) index to the rest of the precision values in that index
                 correct += 1 #increment my counter for shapes in correct class
