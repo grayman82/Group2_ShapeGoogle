@@ -116,10 +116,9 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     for point in Ps_centered.T:
         tempDist = np.linalg.norm(point)
         shell = int(tempDist//interval)
-        dots = np.sum(np.dot(point, SPoints), axis=0) #make an array of dot products with the S points
+        dots = np.dot(point, SPoints) #make an array of dot products with the S points
         sector = np.argmax(dots) #sector corresponds to the largest dot product
         hist[shell][sector] += 1
-
     return hist
 
 #Purpose: To create shape histogram with concentric spherical shells and to
@@ -414,6 +413,7 @@ if __name__ == '__main__':
    (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
    doPCA(Ps)
+   getShapeShellHistogram(Ps, Ns, 5, 5, getSphereSamples())
 
 
     #NRandSamples = 10000 #You can tweak this number
