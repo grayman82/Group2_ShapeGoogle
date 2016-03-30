@@ -158,7 +158,7 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
     interval = math.pi/NBins # get histogram intervals
     sampledTriples = np.random.randomint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
     # account for double instances?
-    for i in range (0, NSamples): 
+    for i in range (0, NSamples):
         p1 = sampledTriples[i][0] # get index of point in Ps
         p2 = sampledTriples[i][1] # get index of point in Ps
         p3 = sampledTriples[i][2] # get index of point in Ps
@@ -249,7 +249,7 @@ def normalizeHist(hist):
     sumHist = hist.sum # sum (from k=1 to K) h[k]
     hist_prime = hist / float(sumHist) # use broadcasting; h'[i] = h[i] / sumHist
     return hist_prime
-    
+
 #Purpose: To compute the euclidean distance between a set
 #of histograms
 #Inputs: AllHists (K x N matrix of histograms, where K is the length
@@ -272,7 +272,7 @@ def compareHistsEuclidean(AllHists):
             dist = sumOfSquares**0.5 # take square root
             D[i][j] = dist # assign distance value for ij
     return D
-    
+
 #Purpose: To compute the cosine distance between a set
 #of histograms
 #Inputs: AllHists (K x N matrix of histograms, where K is the length
@@ -340,8 +340,8 @@ def compareHistsEMD1D(AllHists):
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
             summation = 0
             # treat each histogram as a K-dimensional vector
-            # dist = (sum from k = 1 to K) | hC_i[k] - hC_j[k]| 
-            for k in range (1, K+1): 
+            # dist = (sum from k = 1 to K) | hC_i[k] - hC_j[k]|
+            for k in range (1, K+1):
             # is there a way to avoid a third for-loop?
                 hC_i=hC(pc1, k) # hC_i[k]
                 hC_j=hC(pc2, k) # hC_j[k]
@@ -385,10 +385,29 @@ def getMyShapeDistances(PointClouds, Normals):
 #Returns PR, an (NPerClass-1) length array of average precision values for all
 #recalls
 def getPrecisionRecall(D, NPerClass = 10):
-    PR = np.zeros(NPerClass-1)
-    #TODO: Finish this, compute average precision recall graph
-    #using all point clouds as queries
+    PR = np.zeros(NPerClass-1) #initialize precision value arrays with zeros
+    rIn = 0 #initialize count index for number of rows
+    for row in D: #for every row in the similarity matrix
+        class = rIn//NPerClass #find the class of current row. i.e since increments of NPerClass belong to same class
+        #integer division should floor all values in same class to same class value e.g. 30,31,32...39 become 3
+        sortRow = np.argsort(row) #sort row in question and return the indexes of values
+        count = 1 #initialize count for total number of shapes looked at for now
+        correct = 1 #initialize count for number of shapes in correct class looked at for now
+        for entry in sortRow: #sort through every element in sorted row
+            if (rIn == entry): #If shape is being queried against itself
+                count+= 1 #increment number ofshapes looked at
+                continue #then skip this iteration
+            if (entry//NPerClass == class): #if the class of the current entry is equal to the class of querying entry do this
+                precision = correct/count #calculate precision i.e. fraction of  shapes in the correct class over the fraction of shapes looked at
+                PR[correct - 1] += precision #add precision value of shape in (correct - 1) index to the rest of the precision values in that index
+                correct += 1 #increment my counter for shapes in correct class
+            count+= 1 #increment counter for all shapes looked at.
+            if(correct >= NPerClass-1): #if we've found all correct shapes in class, no need to proceed, break
+                break
+        rIn += 1 #increment row counter i.e. move to next row
+    PR = PR/len(D) #divide all precision values by number of rows i.e find average as summation of precision values/number of precision values
     return PR
+
 
 #########################################################
 ##                     MAIN TESTS                      ##
@@ -399,8 +418,8 @@ if __name__ == '__main__':
    m.loadFile("models_off/biplane0.off") #Load a mesh
    (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
-    
-    
+
+
     #NRandSamples = 10000 #You can tweak this number
     #np.random.seed(100) #For repeatable results randomly sampling
     #Load in and sample all meshes
