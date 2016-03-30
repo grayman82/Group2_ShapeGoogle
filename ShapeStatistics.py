@@ -91,7 +91,7 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
     Ps_centered = Ps - centroid
     #intervals = np.linspace(0, RMax, NShells)
     interval = RMax/NShells #find interval between shells
-    for point in Ps_centered:
+    for point in Ps_centered.T:
         #tempDist = numpy.linalg.norm( point - centroid) #find distance between point in PC and centroid of image
         tempDist = numpy.linalg.norm(point) #find distance of point from centroid
         pos = int(tempDist//interval) #determine what interval this distance falls in by integer division
@@ -109,9 +109,18 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     #points sampled on the sphere
 
     #Create a 2D histogram that is NShells x NSectors
-    hist = np.zeros((NShells, NSectors))
-    ##TODO: Finish this; fill in hist, then sort sectors in descending order
-    return hist.flatten() #Flatten the 2D histogram to a 1D array
+    hist = np.zeros((NShells, NSectors)) #initialize histogram to zeros
+    centroid = np.mean(Ps,1)[:, None]
+    Ps_centered = Ps - centroid
+    interval = RMax/NShells
+    for point in Ps_centered.T:
+        tempDist = np.linalg.norm(point)
+        shell = int(tempDist//interval)
+        dots = np.sum(np.dot(point, SPoints), axis=0) #make an array of dot products with the S points
+        sector = np.argmax(dots) #sector corresponds to the largest dot product
+        hist[shell][sector] += 1
+
+    return hist
 
 #Purpose: To create shape histogram with concentric spherical shells and to
 #compute the PCA eigenvalues in each shell
