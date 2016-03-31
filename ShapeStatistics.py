@@ -37,22 +37,17 @@ def exportPointCloud(Ps, Ns, filename):
 #then scale all of the points so that the RMS distance to the origin is 1
 def samplePointCloud(mesh, N):
     (Ps, Ns) = mesh.randomlySamplePoints(N)
-
     # accounting for translation-- center the point cloud on its centroid
     centroid = np.mean(Ps,1)[:, None] # 3x1 matrix with the mean of each row
     Ps_centered = Ps - centroid # center the point cloud
-
     # accounting for scale-- RMS distance of each point to the origin is 1
-    # re-arranging the RMS equation yields s = sqrt(N/(sum i=1 to N d_i^2))
-    # d_i^2 = (x_i^2 + y_i^2 + z_i^2)^2
     Ps_c_squared = Ps_centered**2 # squares each element of the points in the point cloud
-    row_sum = np.sum(Ps_c_squared, 1) # sum across the rows to get d_i^2
-    col_sum = np.sum(row_sum, 0) # sum all square distances
-    s = (N/col_sum)**0.5 # plug in calculated values and solve for s
+    col_sum = np.sum(Ps_c_squared, 0) # sum across the columns 
+    row_sum = np.sum(col_sum) # sum across the row
+    s = (N/row_sum)**0.5 # plug in calculated values and solve for s
     Ps_new = Ps_centered*s # normalize by 's'
-
     return (Ps_new, Ns)
-
+    
 
 #Purpose: To sample the unit sphere as evenly as possible.  The higher
 #res is, the more samples are taken on the sphere (in an exponential
@@ -85,18 +80,19 @@ def doPCA(X):
 #NShells (number of shells), RMax (maximum radius)
 #Returns: hist (histogram of length NShells)
 def getShapeHistogram(Ps, Ns, NShells, RMax):
-    hist = np.zeros(NShells) #initialize histogram array to zeros
+    h = np.zeros(NShells) #initialize histogram array to zeros
     centroid = np.mean(Ps,1)[:, None] #find centroid of point cloud
-    #cArray = np.linspace(0, RMax, Nshells) #return array representing the bounds of histogram
+    cArray = np.linspace(0, RMax, NShells+1) #return array representing the bounds of histogram
     Ps_centered = Ps - centroid
-    #intervals = np.linspace(0, RMax, NShells)
-    interval = RMax/NShells #find interval between shells
+    interval = float(RMax)/NShells #find interval between shells
     for point in Ps_centered.T:
-        #tempDist = numpy.linalg.norm( point - centroid) #find distance between point in PC and centroid of image
-        tempDist = numpy.linalg.norm(point) #find distance of point from centroid
-        pos = int(tempDist//interval) #determine what interval this distance falls in by integer division
-        hist[pos] += 1 #update the histogram value in this interval
-    return hist
+        diff = np.subtract(point, centroid.T)
+        square = diff**2
+        sum_squares = np.sum(square)
+        dist=sum_squares**0.5
+        pos = (dist//interval) #determine what interval this distance falls in by integer division
+        h[pos] += 1 #update the histogram value in this interval
+    return h,  cArray[0:len(cArray)-1:1]
 
 #Purpose: To create shape histogram with concentric spherical shells and
 #sectors within each shell, sorted in decreasing order of number of points
