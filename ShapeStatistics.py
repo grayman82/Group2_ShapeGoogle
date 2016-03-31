@@ -37,20 +37,15 @@ def exportPointCloud(Ps, Ns, filename):
 #then scale all of the points so that the RMS distance to the origin is 1
 def samplePointCloud(mesh, N):
     (Ps, Ns) = mesh.randomlySamplePoints(N)
-
     # accounting for translation-- center the point cloud on its centroid
     centroid = np.mean(Ps,1)[:, None] # 3x1 matrix with the mean of each row
     Ps_centered = Ps - centroid # center the point cloud
-
     # accounting for scale-- RMS distance of each point to the origin is 1
-    # re-arranging the RMS equation yields s = sqrt(N/(sum i=1 to N d_i^2))
-    # d_i^2 = (x_i^2 + y_i^2 + z_i^2)^2
     Ps_c_squared = Ps_centered**2 # squares each element of the points in the point cloud
-    row_sum = np.sum(Ps_c_squared, 1) # sum across the rows to get d_i^2
-    col_sum = np.sum(row_sum, 0) # sum all square distances
-    s = (N/col_sum)**0.5 # plug in calculated values and solve for s
+    col_sum = np.sum(Ps_c_squared, 0) # sum across the columns
+    row_sum = np.sum(col_sum) # sum across the row
+    s = (N/row_sum)**0.5 # plug in calculated values and solve for s
     Ps_new = Ps_centered*s # normalize by 's'
-
     return (Ps_new, Ns)
 
 
@@ -89,18 +84,20 @@ def doPCA(X):
 #NShells (number of shells), RMax (maximum radius)
 #Returns: hist (histogram of length NShells)
 def getShapeHistogram(Ps, Ns, NShells, RMax):
-    hist = np.zeros(NShells) #initialize histogram array to zeros
+    h = np.zeros(NShells) #initialize histogram array to zeros
     centroid = np.mean(Ps,1)[:, None] #find centroid of point cloud
-    #cArray = np.linspace(0, RMax, Nshells) #return array representing the bounds of histogram
+    cArray = np.linspace(0, RMax, NShells+1) #return array representing the bounds of histogram
     Ps_centered = Ps - centroid
     #intervals = np.linspace(0, RMax, NShells)
-    interval = (RMax+0.0)/NShells #find interval between shells
+    interval = float(RMax)/NShells #find interval between shells
     for point in Ps_centered.T:
-        #tempDist = numpy.linalg.norm( point - centroid) #find distance between point in PC and centroid of image
-        tempDist = numpy.linalg.norm(point) #find distance of point from centroid
-        pos = int(tempDist//interval) #determine what interval this distance falls in by integer division
-        hist[pos] += 1 #update the histogram value in this interval
-    return hist
+        diff = np.subtract(point, centroid.T)
+        square = diff**2
+        sum_squares = np.sum(square)
+        dist=sum_squares**0.5
+        pos = (dist//interval) #determine what interval this distance falls in by integer division
+        h[pos] += 1 #update the histogram value in this interval
+    return h,  cArray[0:len(cArray)-1:1]
 
 #Purpose: To create shape histogram with concentric spherical shells and
 #sectors within each shell, sorted in decreasing order of number of points
@@ -116,7 +113,7 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     hist = np.zeros((NShells, NSectors)) #initialize histogram to zeros
     centroid = np.mean(Ps,1)[:, None]
     Ps_centered = Ps - centroid
-    interval = (RMax+0.0)/NShells
+    interval = float(RMax)/NShells
     for point in Ps_centered.T:
         tempDist = np.linalg.norm(point)
         shell = int(tempDist//interval)
@@ -137,7 +134,7 @@ def getShapeHistogramPCA(Ps, Ns, NShells, RMax):
     centroid = np.mean(Ps,1)[:, None]
     Ps_centered = Ps - centroid
     Ps_organized = []
-    interval = (RMax+0.0)/NShells
+    interval = float(RMax)/NShells
     for i in range(NShells):
         Ps_organized.append([])
     for point in Ps_centered.T:
@@ -185,7 +182,7 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
     interval = math.pi/NBins # get histogram intervals
-    sampledTriples = np.random.randomint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
+    sampledTriples = np.random.randint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
     # account for double instances?
     for i in range (0, NSamples):
         p1 = sampledTriples[i][0] # get index of point in Ps
@@ -197,15 +194,18 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
         P2 = Ps[:, p2] # get point from Ps
         P3 = Ps[:, p3] # get point from Ps
         u = np.subtract(P1, P2) # u is the vector from P2 to P1 so u = P1 - P2
-        v = np.subtraxt(P3, P2) # v is the vector prom P2 to P3 so v = P3 - P2
+        v = np.subtract(P3, P2) # v is the vector prom P2 to P3 so v = P3 - P2
         #cos (theta) = (u dot v) / (|u|*|v|)
         unorm = np.linalg.norm(u) # |u|
         vnorm = np.linalg.norm(v) # |v|
         numerator = np.dot(u, v)
-        denonimator = unorm*vnorm
+        denominator = unorm*vnorm
         costheta = numerator/denominator
         theta = np.arccos(costheta)
         # add angle to histogram
+        #print "i value %d" % i
+        #print "Interval value %d" % interval
+        #print "theta value %d" % theta
         pos = int(theta//interval) # determine bin by integer division
         hist[pos] += 1 #update the histogram value in this interval
     return hist
@@ -414,14 +414,36 @@ def getMyShapeDistances(PointClouds, Normals):
 #Returns PR, an (NPerClass-1) length array of average precision values for all
 #recalls
 def getPrecisionRecall(D, NPerClass = 10):
-    PR = np.zeros(NPerClass-1)
-    #TODO: Finish this, compute average precision recall graph
-    #using all point clouds as queries
+    PR = np.zeros(NPerClass-1) #initialize precision value arrays with zeros
+    rIn = 0 #initialize count index for number of rows
+    for row in D: #for every row in the similarity matrix
+        classval = rIn//NPerClass #find the class of current row. i.e since increments of NPerClass belong to same class
+        #integer division should floor all values in same class to same class value e.g. 30,31,32...39 become 3
+        sortRow = np.argsort(row) #sort row in question and return the indexes of values
+        count = 1 #initialize count for total number of shapes looked at for now
+        correct = 1 #initialize count for number of shapes in correct class looked at for now
+        for entry in sortRow: #sort through every element in sorted row
+            if (rIn == entry): #If shape is being queried against itself
+                #count+= 1 #increment number ofshapes looked at
+                continue #then skip this iteration
+            if (entry//NPerClass == classval): #if the class of the current entry is equal to the class of querying entry do this
+                precision = correct/count #calculate precision i.e. fraction of  shapes in the correct class over the fraction of shapes looked at
+                PR[correct - 1] += precision #add precision value of shape in (correct - 1) index to the rest of the precision values in that index
+                correct += 1 #increment my counter for shapes in correct class
+            count+= 1 #increment counter for all shapes looked at.
+            if(correct >= NPerClass-1): #if we've found all correct shapes in class, no need to proceed, break
+                break
+        rIn += 1 #increment row counter i.e. move to next row
+    PR = PR/len(D) #divide all precision values by number of rows i.e find average as summation of precision values/number of precision values
     return PR
+
 
 #########################################################
 ##                     MAIN TESTS                      ##
 #########################################################
+
+#sys.exit("Not executing rest of code")
+
 
 if __name__ == '__main__':
    m = PolyMesh()
@@ -432,23 +454,49 @@ if __name__ == '__main__':
    #getShapeHistogramPCA(Ps, Ns, 5, 3)
    getA3Histogram(Ps, Ns, 3, 8)
 
+   NRandSamples = 10000 #You can tweak this number
+   np.random.seed(100) #For repeatable results randomly sampling
+   #Load in and sample all meshes
+   PointClouds = []
+   Normals = []
+   for i in range(len(POINTCLOUD_CLASSES)):
+       print "LOADING CLASS %i of %i..."%(i, len(POINTCLOUD_CLASSES))
+       PCClass = []
+       for j in range(NUM_PER_CLASS):
+           m = PolyMesh()
+           filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
+           print "Loading ", filename
+           m.loadOffFileExternal(filename)
+           (Ps, Ns) = samplePointCloud(m, NRandSamples)
+           PointClouds.append(Ps)
+           Normals.append(Ps)
 
-    #NRandSamples = 10000 #You can tweak this number
-    #np.random.seed(100) #For repeatable results randomly sampling
-    #Load in and sample all meshes
-    #PointClouds = []
-    #Normals = []
-    #for i in range(len(POINTCLOUD_CLASSES)):
-        #print "LOADING CLASS %i of %i..."%(i, len(POINTCLOUD_CLASSES))
-        #PCClass = []
-        #for j in range(NUM_PER_CLASS):
-            #m = PolyMesh()
-            #filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
-            #print "Loading ", filename
-            #m.loadOffFileExternal(filename)
-            #(Ps, Ns) = samplePointCloud(m, NRandSamples)
-            #PointClouds.append(Ps)
-            #Normals.append(Ps)
+SPoints = getSphereSamples(2)
+HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 100, 2, 40)
+HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
+HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
+HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
+
+DSpin = compareHistsEuclidean(HistsSpin)
+DEGI = compareHistsEuclidean(HistsEGI)
+DA3 = compareHistsEuclidean(HistsA3)
+DD2 = compareHistsEuclidean(HistsD2)
+
+PRSpin = getPrecisionRecall(DSpin)
+PREGI = getPrecisionRecall(DEGI)
+PRA3 = getPrecisionRecall(DA3)
+PRD2 = getPrecisionRecall(DD2)
+
+recalls = np.linspace(1.0/9.0, 1.0, 9)
+plt.plot(recalls, PREGI, 'c', label='EGI')
+plt.hold(True)
+plt.plot(recalls, PRA3, 'k', label='A3')
+plt.plot(recalls, PRD2, 'r', label='D2')
+plt.plot(recalls, PRSpin, 'b', label='Spin')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.legend()
+plt.show()
 
     #TODO: Finish this, run experiments.  Also in the above code, you might
     #just want to load one point cloud and test your histograms on that first
