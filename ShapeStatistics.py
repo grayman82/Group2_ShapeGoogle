@@ -169,7 +169,7 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
     interval = math.pi/NBins # get histogram intervals
-    sampledTriples = np.random.randomint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
+    sampledTriples = np.random.randint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
     # account for double instances?
     for i in range (0, NSamples):
         p1 = sampledTriples[i][0] # get index of point in Ps
@@ -181,15 +181,18 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
         P2 = Ps[:, p2] # get point from Ps
         P3 = Ps[:, p3] # get point from Ps
         u = np.subtract(P1, P2) # u is the vector from P2 to P1 so u = P1 - P2
-        v = np.subtraxt(P3, P2) # v is the vector prom P2 to P3 so v = P3 - P2
+        v = np.subtract(P3, P2) # v is the vector prom P2 to P3 so v = P3 - P2
         #cos (theta) = (u dot v) / (|u|*|v|)
         unorm = np.linalg.norm(u) # |u|
         vnorm = np.linalg.norm(v) # |v|
         numerator = np.dot(u, v)
-        denonimator = unorm*vnorm
+        denominator = unorm*vnorm
         costheta = numerator/denominator
         theta = np.arccos(costheta)
         # add angle to histogram
+        #print "i value %d" % i
+        #print "Interval value %d" % interval
+        #print "theta value %d" % theta
         pos = int(theta//interval) # determine bin by integer division
         hist[pos] += 1 #update the histogram value in this interval
     return hist
@@ -426,6 +429,9 @@ def getPrecisionRecall(D, NPerClass = 10):
 ##                     MAIN TESTS                      ##
 #########################################################
 
+#sys.exit("Not executing rest of code")
+
+
 if __name__ == '__main__':
    m = PolyMesh()
    m.loadFile("models_off/biplane0.off") #Load a mesh
@@ -434,23 +440,49 @@ if __name__ == '__main__':
    doPCA(Ps)
    getShapeShellHistogram(Ps, Ns, 5, 5, getSphereSamples())
 
+   NRandSamples = 10000 #You can tweak this number
+   np.random.seed(100) #For repeatable results randomly sampling
+   #Load in and sample all meshes
+   PointClouds = []
+   Normals = []
+   for i in range(len(POINTCLOUD_CLASSES)):
+       print "LOADING CLASS %i of %i..."%(i, len(POINTCLOUD_CLASSES))
+       PCClass = []
+       for j in range(NUM_PER_CLASS):
+           m = PolyMesh()
+           filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
+           print "Loading ", filename
+           m.loadOffFileExternal(filename)
+           (Ps, Ns) = samplePointCloud(m, NRandSamples)
+           PointClouds.append(Ps)
+           Normals.append(Ps)
 
-    #NRandSamples = 10000 #You can tweak this number
-    #np.random.seed(100) #For repeatable results randomly sampling
-    #Load in and sample all meshes
-    #PointClouds = []
-    #Normals = []
-    #for i in range(len(POINTCLOUD_CLASSES)):
-        #print "LOADING CLASS %i of %i..."%(i, len(POINTCLOUD_CLASSES))
-        #PCClass = []
-        #for j in range(NUM_PER_CLASS):
-            #m = PolyMesh()
-            #filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
-            #print "Loading ", filename
-            #m.loadOffFileExternal(filename)
-            #(Ps, Ns) = samplePointCloud(m, NRandSamples)
-            #PointClouds.append(Ps)
-            #Normals.append(Ps)
+SPoints = getSphereSamples(2)
+HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 100, 2, 40)
+HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
+HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
+HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
+
+DSpin = compareHistsEuclidean(HistsSpin)
+DEGI = compareHistsEuclidean(HistsEGI)
+DA3 = compareHistsEuclidean(HistsA3)
+DD2 = compareHistsEuclidean(HistsD2)
+
+PRSpin = getPrecisionRecall(DSpin)
+PREGI = getPrecisionRecall(DEGI)
+PRA3 = getPrecisionRecall(DA3)
+PRD2 = getPrecisionRecall(DD2)
+
+recalls = np.linspace(1.0/9.0, 1.0, 9)
+plt.plot(recalls, PREGI, 'c', label='EGI')
+plt.hold(True)
+plt.plot(recalls, PRA3, 'k', label='A3')
+plt.plot(recalls, PRD2, 'r', label='D2')
+plt.plot(recalls, PRSpin, 'b', label='Spin')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.legend()
+plt.show()
 
     #TODO: Finish this, run experiments.  Also in the above code, you might
     #just want to load one point cloud and test your histograms on that first
