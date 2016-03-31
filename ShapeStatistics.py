@@ -398,10 +398,29 @@ def getMyShapeDistances(PointClouds, Normals):
 #Returns PR, an (NPerClass-1) length array of average precision values for all
 #recalls
 def getPrecisionRecall(D, NPerClass = 10):
-    PR = np.zeros(NPerClass-1)
-    #TODO: Finish this, compute average precision recall graph
-    #using all point clouds as queries
+    PR = np.zeros(NPerClass-1) #initialize precision value arrays with zeros
+    rIn = 0 #initialize count index for number of rows
+    for row in D: #for every row in the similarity matrix
+        classval = rIn//NPerClass #find the class of current row. i.e since increments of NPerClass belong to same class
+        #integer division should floor all values in same class to same class value e.g. 30,31,32...39 become 3
+        sortRow = np.argsort(row) #sort row in question and return the indexes of values
+        count = 1 #initialize count for total number of shapes looked at for now
+        correct = 1 #initialize count for number of shapes in correct class looked at for now
+        for entry in sortRow: #sort through every element in sorted row
+            if (rIn == entry): #If shape is being queried against itself
+                #count+= 1 #increment number ofshapes looked at
+                continue #then skip this iteration
+            if (entry//NPerClass == classval): #if the class of the current entry is equal to the class of querying entry do this
+                precision = correct/count #calculate precision i.e. fraction of  shapes in the correct class over the fraction of shapes looked at
+                PR[correct - 1] += precision #add precision value of shape in (correct - 1) index to the rest of the precision values in that index
+                correct += 1 #increment my counter for shapes in correct class
+            count+= 1 #increment counter for all shapes looked at.
+            if(correct >= NPerClass-1): #if we've found all correct shapes in class, no need to proceed, break
+                break
+        rIn += 1 #increment row counter i.e. move to next row
+    PR = PR/len(D) #divide all precision values by number of rows i.e find average as summation of precision values/number of precision values
     return PR
+
 
 #########################################################
 ##                     MAIN TESTS                      ##
