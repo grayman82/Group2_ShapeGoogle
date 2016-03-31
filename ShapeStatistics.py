@@ -395,7 +395,7 @@ def getPrecisionRecall(D, NPerClass = 10):
         correct = 1 #initialize count for number of shapes in correct class looked at for now
         for entry in sortRow: #sort through every element in sorted row
             if (rIn == entry): #If shape is being queried against itself
-                count+= 1 #increment number ofshapes looked at
+                #count+= 1 #increment number ofshapes looked at
                 continue #then skip this iteration
             if (entry//NPerClass == classval): #if the class of the current entry is equal to the class of querying entry do this
                 precision = correct/count #calculate precision i.e. fraction of  shapes in the correct class over the fraction of shapes looked at
