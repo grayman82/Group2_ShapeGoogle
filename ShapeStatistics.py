@@ -63,10 +63,15 @@ def getSphereSamples(res = 2):
 
 #Purpose: To compute PCA on a point cloud
 #Inputs: X (3 x N array representing a point cloud)
+#Returns: (eigs, V) where eigs are the eigenvalues sorted in decreasing order and
+#V is a 3x3 matrix with each row being the eigenvector corresponding to the eigenvalue
+#of the same index in eigs
 def doPCA(X):
-    ##TODO: Fill this in for a useful helper function
-    eigs = np.array([1, 1, 1]) #Dummy value
-    V = np.eye(3) #Dummy Value
+    A = np.dot(X, X.T)
+    (eigs, V) = np.linalg.eig(A) #retrieves eigenvalues and column matrix of eigenvectors
+    eig_tuples = zip(eigs, V.T)
+    sorted(eig_tuples, key= lambda eig_pair: -1*eig_pair[0]) #sorting eigs in decreasing order
+    (eigs, V) = zip(*eig_tuples)
     return (eigs, V)
 
 #########################################################
@@ -83,10 +88,10 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
     hist = np.zeros(NShells) #initialize histogram array to zeros
     centroid = np.mean(Ps,1)[:, None] #find centroid of point cloud
     #cArray = np.linspace(0, RMax, Nshells) #return array representing the bounds of histogram
-    Ps_centered = PS - centroid
+    Ps_centered = Ps - centroid
     #intervals = np.linspace(0, RMax, NShells)
     interval = RMax/NShells #find interval between shells
-    for point in Ps_centered:
+    for point in Ps_centered.T:
         #tempDist = numpy.linalg.norm( point - centroid) #find distance between point in PC and centroid of image
         tempDist = numpy.linalg.norm(point) #find distance of point from centroid
         pos = int(tempDist//interval) #determine what interval this distance falls in by integer division
@@ -104,9 +109,17 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     #points sampled on the sphere
 
     #Create a 2D histogram that is NShells x NSectors
-    hist = np.zeros((NShells, NSectors))
-    ##TODO: Finish this; fill in hist, then sort sectors in descending order
-    return hist.flatten() #Flatten the 2D histogram to a 1D array
+    hist = np.zeros((NShells, NSectors)) #initialize histogram to zeros
+    centroid = np.mean(Ps,1)[:, None]
+    Ps_centered = Ps - centroid
+    interval = RMax/NShells
+    for point in Ps_centered.T:
+        tempDist = np.linalg.norm(point)
+        shell = int(tempDist//interval)
+        dots = np.dot(point, SPoints) #make an array of dot products with the S points
+        sector = np.argmax(dots) #sector corresponds to the largest dot product
+        hist[shell][sector] += 1
+    return hist
 
 #Purpose: To create shape histogram with concentric spherical shells and to
 #compute the PCA eigenvalues in each shell
@@ -418,6 +431,8 @@ if __name__ == '__main__':
    m.loadFile("models_off/biplane0.off") #Load a mesh
    (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
+   doPCA(Ps)
+   getShapeShellHistogram(Ps, Ns, 5, 5, getSphereSamples())
 
 
     #NRandSamples = 10000 #You can tweak this number
