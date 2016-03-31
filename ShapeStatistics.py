@@ -165,8 +165,8 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
     interval = math.pi/NBins # get histogram intervals
+    cArray = np.linspace(0, math.pi, NBins+1)
     sampledTriples = np.random.randint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
-    # account for double instances?
     for i in range (0, NSamples):
         p1 = sampledTriples[i][0] # get index of point in Ps
         p2 = sampledTriples[i][1] # get index of point in Ps
@@ -186,12 +186,9 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
         costheta = numerator/denominator
         theta = np.arccos(costheta)
         # add angle to histogram
-        #print "i value %d" % i
-        #print "Interval value %d" % interval
-        #print "theta value %d" % theta
-        pos = int(theta//interval) # determine bin by integer division
+        pos = theta//interval # determine bin by integer division
         hist[pos] += 1 #update the histogram value in this interval
-    return hist
+    return hist #, cArray[0:len(cArray)-1:1]
 
 #Purpose: To create the Extended Gaussian Image by binning normals to
 #sphere directions after rotating the point cloud to align with its principal axes
