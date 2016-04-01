@@ -82,7 +82,7 @@ def doPCA(X):
 #NShells (number of shells), RMax (maximum radius)
 #Returns: hist (histogram of length NShells)
 def getShapeHistogram(Ps, Ns, NShells, RMax):
-    h = np.zeros(NShells) #initialize histogram array to zeros
+    hist = np.zeros(NShells) #initialize histogram array to zeros
     centroid = np.mean(Ps,1)[:, None] #find centroid of point cloud
     cArray = np.linspace(0, RMax, NShells+1) #return array representing the bounds of histogram
     Ps_centered = Ps - centroid
@@ -94,8 +94,8 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
         sum_squares = np.sum(square)
         dist=sum_squares**0.5
         pos = (dist//interval) #determine what interval this distance falls in by integer division
-        h[pos] += 1 #update the histogram value in this interval
-    return h,  cArray[0:len(cArray)-1:1]
+        hist[pos] += 1 #update the histogram value in this interval
+    return hist #cArray[0:len(cArray)-1:1]; used for testing purposes
 
 #Purpose: To create shape histogram with concentric spherical shells and
 #sectors within each shell, sorted in decreasing order of number of points
@@ -154,9 +154,9 @@ def getShapeHistogramPCA(Ps, Ns, NShells, RMax):
 #to compute distances)
 def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
     hist = np.zeros(NBins)
-    interval = DMax/NBins # get histogram intervals
-    sampledPairs = np.random.randomint(len(Ps[0]), size = (NSamples, 2.)) # get random point pairs
-    # account for repeat pairs?
+    interval = float(DMax)/NBins # get histogram intervals
+    cArray = np.linspace(0, DMax, NBins+1)
+    sampledPairs = np.random.randint(len(Ps[0]), size = (NSamples, 2.)) # get random point pairs
     for i in range (0, NSamples):
         p1 = sampledPairs[i][0] # get index of point in Ps
         p2 = sampledPairs[i][1] # get index of point in Ps
@@ -170,10 +170,10 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
         temp3 = np.sum(temp2)
         distance = temp3**0.5 # take square root
         # add distance to histogram
-        pos = int(distance//interval) # determine bin by integer division
+        pos = distance//interval # determine bin by integer division
         # add check to see if pos is out of bounds?
         hist[pos]+=1 #update the histogram value in this interval
-    return hist
+    return hist  #cArray[0:len(cArray)-1:1]; used for testing purposes
 
 #Purpose: To create shape histogram of the angles between randomly sampled triples of points
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals) (not needed here
@@ -182,8 +182,8 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
     interval = math.pi/NBins # get histogram intervals
+    cArray = np.linspace(0, math.pi, NBins+1)
     sampledTriples = np.random.randint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
-    # account for double instances?
     for i in range (0, NSamples):
         p1 = sampledTriples[i][0] # get index of point in Ps
         p2 = sampledTriples[i][1] # get index of point in Ps
@@ -203,12 +203,9 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
         costheta = numerator/denominator
         theta = np.arccos(costheta)
         # add angle to histogram
-        #print "i value %d" % i
-        #print "Interval value %d" % interval
-        #print "theta value %d" % theta
-        pos = int(theta//interval) # determine bin by integer division
+        pos = theta//interval # determine bin by integer division
         hist[pos] += 1 #update the histogram value in this interval
-    return hist
+    return hist #, cArray[0:len(cArray)-1:1]
 
 #Purpose: To create the Extended Gaussian Image by binning normals to
 #sphere directions after rotating the point cloud to align with its principal axes
