@@ -67,10 +67,8 @@ def doPCA(X):
     A = np.dot(X, X.T)
     (eigs, V) = np.linalg.eig(A) #retrieves eigenvalues and column matrix of eigenvectors
     eig_tuples = zip(eigs, V.T)
-    print eig_tuples
-    sorted(eig_tuples, key= lambda eig_pair: eig_pair[0]) #sorting eigs in decreasing order
+    eig_tuples = sorted(eig_tuples, key= lambda eig_pair: eig_pair[0], reverse=True) #sorting eigs in decreasing order
     (eigs, V) = zip(*eig_tuples)
-    print eigs
     return (eigs, V)
 
 #########################################################
@@ -120,6 +118,8 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
         dots = np.dot(point, SPoints) #make an array of dot products with the S points
         sector = np.argmax(dots) #sector corresponds to the largest dot product
         hist[shell][sector] += 1
+    for i in range(NShells):
+        hist[i] = sorted(hist[i], reverse=True)
     return hist
 
 #Purpose: To create shape histogram with concentric spherical shells and to
@@ -450,9 +450,6 @@ if __name__ == '__main__':
    m.loadFile("models_off/biplane0.off") #Load a mesh
    (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
-   #getShapeShellHistogram(Ps, Ns, 5, 5, getSphereSamples())
-   #getShapeHistogramPCA(Ps, Ns, 5, 3)
-   getA3Histogram(Ps, Ns, 3, 8)
 
    NRandSamples = 10000 #You can tweak this number
    np.random.seed(100) #For repeatable results randomly sampling
