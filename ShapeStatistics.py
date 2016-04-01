@@ -215,7 +215,12 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
 def getEGIHistogram(Ps, Ns, SPoints):
     S = SPoints.shape[1]
     hist = np.zeros(S)
-    ##TOOD: Finish this; fill in hist
+    (eigs, V) = doPCA(Ps)
+    Ns_aligned = np.dot(V, Ns)
+    for normal in Ns_aligned.T:
+        dots = np.dot(normal, SPoints)
+        pos = np.argmax(dots)
+        hist[pos] += 1
     return hist
 
 #Purpose: To create an image which stores the amalgamation of rotating
