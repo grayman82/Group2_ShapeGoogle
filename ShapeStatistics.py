@@ -160,23 +160,18 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
     sampledTriples = np.random.randint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
-    angles = np.array([])
-    for i in range (0, NSamples):
-        p1 = sampledTriples[i][0] # get index of point in Ps
-        p2 = sampledTriples[i][1] # get index of point in Ps
-        p3 = sampledTriples[i][2] # get index of point in Ps
-        if (p1==p2 or p1==p3 or p2==p3): # check for three unique points within the sample
-            continue # duplicate point; do not evaluate angle, go to next triple
-        P1 = Ps[:, p1] # get point from Ps
-        P2 = Ps[:, p2] # get point from Ps
-        P3 = Ps[:, p3] # get point from Ps
-        u = np.subtract(P1, P2) # u is the vector from P2 to P1 so u = P1 - P2
-        v = np.subtract(P3, P2) # v is the vector prom P2 to P3 so v = P3 - P2
-        unorm = np.linalg.norm(u) # |u|
-        vnorm = np.linalg.norm(v) # |v|
-        theta = np.arccos(float(np.dot(u, v))/(unorm*vnorm)) #cos (theta) = (u dot v) / (|u|*|v|)
-        angles = np.append(angles, theta)
-    hist, bins= np.histogram(angles, bins = int(NBins), range=[0, float(np.pi)])
+    P1A = Ps[:, sampledTriples[:,0]]
+    P2A = Ps[:, sampledTriples[:,1]]
+    P3A = Ps[:, sampledTriples[:,2]]
+    U = np.subtract(P1A, P2A)
+    V = np.subtract(P3A, P2A)
+    UNORM = np.linalg.norm(U, axis = 0)
+    VNORM = np.linalg.norm(V, axis = 0)
+    UDOT = np.sum(U*V, axis = 0)
+    UVNORM = np.multiply(UNORM, VNORM)
+    ANGLES = np.arccos(np.divide(UDOT, UVNORM))
+    ANGLES = np.nan_to_num(ANGLES)
+    hist, bins= np.histogram(ANGLES, bins = int(NBins), range=[0, float(np.pi)])
     #plt.bar(bins, histogram, width= np.pi / NBins * 0.9)
     #plt.show()
     return hist 
@@ -447,19 +442,17 @@ if __name__ == '__main__':
    #plt.show()
 
    #TESTING GET-A3-HISTOGRAM
-   #NBins = 12
-   #NSamples = 5000
-   #histogram, bins =  getA3Histogram(Ps, Ns, NBins, NSamples)
-   #print histogram
-   #print bins
+   #NBins = 2
+   #NSamples = 10
+   #histogram =  getA3Histogram(Ps, Ns, NBins, NSamples)
    #plt.bar(bins, histogram, width= math.pi / NBins * 0.9)
    #plt.show()
 
    #TESTING GET-SHAPE-SHELL-HISTOGRAM
-   NShells = 4
-   RMax = 2
-   SPoints = getSphereSamples() # res is auto-set to 2 (66 sample points)
-   histogram = getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints)
+   #NShells = 4
+   #RMax = 2
+   #SPoints = getSphereSamples() # res is auto-set to 2 (66 sample points)
+   #histogram = getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints)
    #print histogram
    #print bins
    #plt.bar(bins, histogram, width =  float(RMax)/NShells/SPoints.shape[1]*0.9)
