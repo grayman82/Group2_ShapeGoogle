@@ -159,10 +159,8 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
 #NSamples (number of triples of points sample to compute angles)
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
-    interval = math.pi/NBins # get histogram intervals
-    #print "interval: %s" % interval
-    cArray = np.linspace(0, math.pi, NBins+1)
     sampledTriples = np.random.randint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
+    angles = np.array([])
     for i in range (0, NSamples):
         p1 = sampledTriples[i][0] # get index of point in Ps
         p2 = sampledTriples[i][1] # get index of point in Ps
@@ -174,21 +172,14 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
         P3 = Ps[:, p3] # get point from Ps
         u = np.subtract(P1, P2) # u is the vector from P2 to P1 so u = P1 - P2
         v = np.subtract(P3, P2) # v is the vector prom P2 to P3 so v = P3 - P2
-        #cos (theta) = (u dot v) / (|u|*|v|)
         unorm = np.linalg.norm(u) # |u|
         vnorm = np.linalg.norm(v) # |v|
-        numerator = np.dot(u, v)
-        denominator = unorm*vnorm
-        costheta = numerator/denominator
-        #if (costheta > 1 or costheta < -1):
-        #    print "costheta: %i" % costheta
-        theta = np.arccos(costheta)
-        # add angle to histogram
-        pos = theta//interval # determine bin by integer division
-        #if(pos > len(hist) or pos < 0):
-        #    continue
-        hist[pos] += 1 #update the histogram value in this interval
-    return hist #, cArray[0:len(cArray)-1:1]
+        theta = np.arccos(float(np.dot(u, v))/(unorm*vnorm)) #cos (theta) = (u dot v) / (|u|*|v|)
+        angles = np.append(angles, theta)
+    hist, bins= np.histogram(angles, bins = int(NBins), range=[0, float(np.pi)])
+    #plt.bar(bins, histogram, width= np.pi / NBins * 0.9)
+    #plt.show()
+    return hist 
 
 #Purpose: To create the Extended Gaussian Image by binning normals to
 #sphere directions after rotating the point cloud to align with its principal axes
