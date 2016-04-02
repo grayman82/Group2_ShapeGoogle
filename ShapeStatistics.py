@@ -94,26 +94,17 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
 #the unit sphere (get these with the function "getSphereSamples")
 def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     NSectors = SPoints.shape[1] #A number of sectors equal to the number of points sampled on the sphere
-    #Create a 2D histogram that is NShells x NSectors
-    hist = np.zeros((NShells, NSectors)) #initialize histogram to zeros
-    #Create histogram bins
-    cArray = np.linspace(0, RMax, NSectors*NShells+1) #return array representing the bins of the histogram
-    #Generate histogram data
-    shell_interval = float(RMax)/NShells #find interval between shells
+    hist = np.zeros((NShells, NSectors)) #Create a 2D histogram that is NShells x NSectors & initialize with zeros
     centroid = np.mean(Ps,1)[:, None]
     Ps_centered = Ps - centroid
-    for point in Ps_centered.T: #for every point in the point cloud
-        #Determine shell
-        dist = np.linalg.norm(point)
-        shell = dist//shell_interval
-        #Determine sector
-        dots = np.dot(point, SPoints) #make an array of dot products with the S points
-        sector = np.argmax(dots) #sector corresponds to the largest dot product
-        hist[shell][sector] += 1 #add data to the histogram
-    #Reverse-sort the sectors of each shell (rotation invariant)
-    hist = np.fliplr(np.sort(hist))
-    return hist.flatten() #, cArray[0:len(cArray)-1:1]
-
+    distances = np.linalg.norm(Ps_centered, axis = 0) #calculate point distance from origin
+    shells = distances//(float(RMax)/NShells) #calculate shell values
+    dots = np.dot(Ps_centered.T, SPoints) #calculate dot products
+    sectors = np.argmax(dots, axis = 1) #calculate sector values
+    #generate histogram
+    hist, xedges, yedges = np.histogram2d(shells, sectors, bins=[int(NShells), int(NSectors)], range = [[0.0, float(NShells)],[0.0, float(NSectors)]]) 
+    hist = np.fliplr(np.sort(hist)) # reverse-sort sectors in each shell
+    return hist.flatten()
 
 #Purpose: To create shape histogram with concentric spherical shells and to
 #compute the PCA eigenvalues in each shell
@@ -462,11 +453,11 @@ def getPrecisionRecall(D, NPerClass = 10):
 if __name__ == '__main__':
    m = PolyMesh()
    m.loadFile("models_off/biplane0.off") #Load a mesh
-   (Ps, Ns) = samplePointCloud(m, 5) #Sample 20,000 points and associated normals
+   (Ps, Ns) = samplePointCloud(m, 10000) #Sample 20,000 points and associated normals
    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
 
    #TESTING GET-SHAPE-HISTOGRAM
-   histogram1 = getShapeHistogram(Ps, Ns, 21, 3)
+   #histogram1 = getShapeHistogram(Ps, Ns, 21, 3)
    #print histogram1
    #print bins1
    #plt.bar(bins1, histogram1, width=3.0/21*0.9)
@@ -492,10 +483,10 @@ if __name__ == '__main__':
    #plt.show()
 
    #TESTING GET-SHAPE-SHELL-HISTOGRAM
-   #NShells = 10
-   #RMax = 2
-   #SPoints = getSphereSamples() # res is auto-set to 2 (66 sample points)
-   #histogram, bins = getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints)
+   NShells = 4
+   RMax = 2
+   SPoints = getSphereSamples() # res is auto-set to 2 (66 sample points)
+   histogram = getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints)
    #print histogram
    #print bins
    #plt.bar(bins, histogram, width =  float(RMax)/NShells/SPoints.shape[1]*0.9)
