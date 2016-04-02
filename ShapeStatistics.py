@@ -279,11 +279,7 @@ def compareHistsEuclidean(AllHists):
         for j in range (N): 
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
             # dist = sqrt ( (pc1_1 - pc2_1)^2 + ... + (pc1_K - pc2_K)^2 )
-            pc1_pc2 = np.subtract(pc1, pc2) # element-wise subtraction
-            square = pc1_pc2**2 # element-wise square
-            sumOfSquares = np.sum(square) # sum the elements
-            dist = sumOfSquares**0.5 # take square root
-            D[i][j] = dist # assign distance value for ij
+            D[i][j] = np.linalg.norm(np.subtract(pc1, pc2))
     return D
 
 #Purpose: To compute the cosine distance between a set
