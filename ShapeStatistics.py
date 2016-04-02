@@ -32,7 +32,6 @@ def exportPointCloud(Ps, Ns, filename):
         fout.write(fmtstr%tuple(fields.flatten().tolist()))
     fout.close()
 
-
 #Purpose: To sample a point cloud, center it on its centroid, and
 #then scale all of the points so that the RMS distance to the origin is 1
 def samplePointCloud(mesh, N):
@@ -47,7 +46,6 @@ def samplePointCloud(mesh, N):
     s = (N/row_sum)**0.5 # plug in calculated values and solve for s
     Ps_new = Ps_centered*s # normalize by 's'
     return (Ps_new, Ns)
-
 
 #Purpose: To sample the unit sphere as evenly as possible.  The higher
 #res is, the more samples are taken on the sphere (in an exponential
@@ -86,13 +84,14 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
     centroid = np.mean(Ps,1)[:, None] #find centroid of point cloud
     cArray = np.linspace(0, RMax, NShells+1) #return array representing the bounds of histogram
     Ps_centered = Ps - centroid
-    #intervals = np.linspace(0, RMax, NShells)
     interval = float(RMax)/NShells #find interval between shells
     for point in Ps_centered.T:
         diff = np.subtract(point, centroid.T)
         square = diff**2
         sum_squares = np.sum(square)
         dist=sum_squares**0.5
+        print dist
+        print np.linalg.norm(point)
         pos = (dist//interval) #determine what interval this distance falls in by integer division
         hist[pos] += 1 #update the histogram value in this interval
     return hist #cArray[0:len(cArray)-1:1]
@@ -243,11 +242,23 @@ def getEGIHistogram(Ps, Ns, SPoints):
 #the plane, Extent: The extent of each axis, Dim: The number of pixels along
 #each minor axis
 def getSpinImage(Ps, Ns, NAngles, Extent, Dim):
-    #Create an image
-    hist = np.zeros((Dim, Dim))
-    #TODO: Finish this
+    hist = np.zeros((Dim, Dim)) # create a 2D histogram for an image
+    (eigs, V) = doPCA(Ps) # eigVals in decreasing order w. corresponding eigVecs in V
+    Ps_aligned = np.dot(V, Ps) # project point cloud onto PCA axes
+    # rotate the point cloud around axis of greatest variation (x-axis)
+    angles_of_rotation = np.linspace(0, 360, NAngles+1)
+    for i in range(len(angles_of_rotation)-1):
+        theta = np.radians(angles_of_rotation[i])
+        vals = np.array([1.0, 0.0, 0.0, 0.0, np.cos(theta), np.sin(-theta), 0.0, np.sin(theta), np.cos(theta)])
+        R = np.reshape(vals, (3, 3)) # rotation matrix
+        Ps_rotated = np.dot(R, Ps_aligned)
+        # Bin the point cloud projected onto the other two axes
+        H, xedges, yedges = np.histogram2d(Ps_rotated[1,:], Ps_rotated[2,:], bins=Dim, range = [[-Extent, Extent],[-Extent, Extent]]) 
+        hist = hist + H # sum images
+    fig1 = plt.figure()
+    plt.pcolormesh(xedges, yedges, hist)
+    plt.show() # display spin image
     return hist.flatten()
-
 
 #Purpose: To create a histogram of spherical harmonic magnitudes in concentric
 #spheres after rasterizing the point cloud to a voxel grid
@@ -259,7 +270,6 @@ def getSpinImage(Ps, Ns, NAngles, Extent, Dim):
 def getSphericalHarmonicMagnitudes(Ps, Ns, VoxelRes, Extent, NHarmonics, NSpheres):
     hist = np.zeros((NSpheres, NHarmonics))
     #TODO: Finish this
-
     return hist.flatten()
 
 #Purpose: Utility function for wrapping around the statistics functions.
@@ -501,7 +511,12 @@ if __name__ == '__main__':
    #print bins
    #plt.bar(bins, histogram, width =  float(RMax)/NShells/SPoints.shape[1]*0.9)
    #plt.show()
-
+   
+   #TESTING GET-SPIN-IMAGE
+   #NAngles = 720
+   #Extent = 2
+   #Dim = 1000
+   #histogram = getSpinImage(Ps, Ns, NAngles, Extent, Dim)
 
    NRandSamples = 10000 #You can tweak this number
    np.random.seed(100) #For repeatable results randomly sampling
