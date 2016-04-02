@@ -177,6 +177,8 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
         # add distance to histogram
         pos = distance//interval # determine bin by integer division
         # add check to see if pos is out of bounds?
+        if distance>DMax: #fixed
+            continue
         hist[pos]+=1 #update the histogram value in this interval
     return hist  #cArray[0:len(cArray)-1:1]
 
@@ -187,6 +189,7 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
 def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist = np.zeros(NBins)
     interval = math.pi/NBins # get histogram intervals
+    #print "interval: %s" % interval
     cArray = np.linspace(0, math.pi, NBins+1)
     sampledTriples = np.random.randint(len(Ps[0]), size= (NSamples, 3.)) # get random point triples
     for i in range (0, NSamples):
@@ -206,9 +209,13 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
         numerator = np.dot(u, v)
         denominator = unorm*vnorm
         costheta = numerator/denominator
+        #if (costheta > 1 or costheta < -1):
+        #    print "costheta: %i" % costheta
         theta = np.arccos(costheta)
         # add angle to histogram
         pos = theta//interval # determine bin by integer division
+        #if(pos > len(hist) or pos < 0):
+        #    continue
         hist[pos] += 1 #update the histogram value in this interval
     return hist #, cArray[0:len(cArray)-1:1]
 
@@ -282,7 +289,8 @@ def makeAllHistograms(PointClouds, Normals, histFunction, *args):
 #Inputs: hist, a 1D array of length K with the values of the histogram
 # h'[i] = h[i] / sum (from k = 1 to K) h[k]
 def normalizeHist(hist):
-    sumHist = hist.sum # sum (from k=1 to K) h[k]
+    sumHist = np.sum(hist) # sum (from k=1 to K) h[k] #fixed
+    #hist_prime = hist / float(sumHist) # use broadcasting; h'[i] = h[i] / sumHist
     hist_prime = hist / float(sumHist) # use broadcasting; h'[i] = h[i] / sumHist
     return hist_prime
 
@@ -513,27 +521,27 @@ if __name__ == '__main__':
            Normals.append(Ns)
 
 SPoints = getSphereSamples(2)
-HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 100, 2, 40)
+#HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 100, 2, 40)
 HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
-#HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
-#HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
+HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
+HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
 
-DSpin = compareHistsEuclidean(HistsSpin)
+#DSpin = compareHistsEuclidean(HistsSpin)
 DEGI = compareHistsEuclidean(HistsEGI)
 #DA3 = compareHistsEuclidean(HistsA3)
-#DD2 = compareHistsEuclidean(HistsD2)
+DD2 = compareHistsEuclidean(HistsD2)
 
-PRSpin = getPrecisionRecall(DSpin)
+#PRSpin = getPrecisionRecall(DSpin)
 PREGI = getPrecisionRecall(DEGI)
 #PRA3 = getPrecisionRecall(DA3)
-#PRD2 = getPrecisionRecall(DD2)
+PRD2 = getPrecisionRecall(DD2)
 
 recalls = np.linspace(1.0/9.0, 1.0, 9)
 plt.plot(recalls, PREGI, 'c', label='EGI')
 plt.hold(True)
 #plt.plot(recalls, PRA3, 'k', label='A3')
-#plt.plot(recalls, PRD2, 'r', label='D2')
-plt.plot(recalls, PRSpin, 'b', label='Spin')
+plt.plot(recalls, PRD2, 'r', label='D2')
+#plt.plot(recalls, PRSpin, 'b', label='Spin')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
 plt.legend()
