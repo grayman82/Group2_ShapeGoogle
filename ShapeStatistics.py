@@ -315,14 +315,6 @@ def compareHistsChiSquared(AllHists):
             D[i][j] = 0.5*summation # scale & assign distance value for ij
     return D
 
-#Purpose: Helper method to compute the CDF hC for EMD1D
-#Inputs: hist (histogram); k
-def hC(hist, k):
-    # hC[k] = (sum from a=0 to k) h[a]
-    truncatedHist = hist[0:k+1:1] # splice array; somehow it doesn't throw an IOOB error if k=K
-    result = np.sum(truncatedHist) # sum over array
-    return result
-
 #Purpose: To compute the 1D Earth mover's distance between a set
 #of histograms (note that this only makes sense for 1D histograms)
 #Inputs: AllHists (K x N matrix of histograms, where K is the length
@@ -331,22 +323,16 @@ def hC(hist, k):
 #distance between the histogram for point cloud i and point cloud j)
 def compareHistsEMD1D(AllHists):
     N = AllHists.shape[1]  # number of columns aka number of point clouds / histograms
-    K = AllHists.shape[0]  # number of rows aka number of bins in the histogram
     D = np.zeros((N, N))
-    for i in range (N): # could change this to range (N-1) for efficiency?
+    for i in range (N): # 
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): # could change this to range (i+1, N) for efficiency?
+        for j in range (N):
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
-            summation = 0
-            # treat each histogram as a K-dimensional vector
             # dist = (sum from k = 1 to K) | hC_i[k] - hC_j[k]|
-            for k in range (1, K+1):
-            # is there a way to avoid a third for-loop?
-                hC_i=hC(pc1, k) # hC_i[k]
-                hC_j=hC(pc2, k) # hC_j[k]
-                summation += np.absolute(np.subtract(hC_i,hC_j)) # | hC_i[k] - hC_j[k]| ; add to sum
-            dist = summation
-            D[i][j] = dist # assign distance value for ij
+            hci= np.cumsum(pc1)
+            hcj= np.cumsum(pc2)
+            emd = np.sum(np.absolute(np.subtract(hci,hcj)))
+            D[i][j] = emd 
     return D
 
 
