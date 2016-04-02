@@ -139,17 +139,14 @@ def getShapeHistogramPCA(Ps, Ns, NShells, RMax):
 def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
     hist = np.zeros(NBins)
     sampledPairs = np.random.randint(len(Ps[0]), size = (NSamples, 2.)) # get random point pairs
-    distances = np.array([])
-    for i in range (0, NSamples):
-        p1 = sampledPairs[i][0] # get index of point in Ps
-        p2 = sampledPairs[i][1] # get index of point in Ps
-        if (p1 == p2): # check for two unique points within the sample
-            continue # duplicate point; do not evaluate distance, go to next pair
-        P1 = Ps[:,p1] # get point from Ps
-        P2 = Ps[:,p2] # get point from Ps
-        temp = np.subtract(P1, P2) # p1 - p2
-        distances = np.append(distances, np.linalg.norm(temp))
-    hist, bins= np.histogram(distances, bins = int(NBins), range=[0, float(DMax)])
+    P1A = Ps[:, sampledPairs[:,0]]
+    P2A = Ps[:, sampledPairs[:,1]]
+    TEMP = np.subtract(P1A, P2A)
+    DISTANCES = np.linalg.norm(TEMP, axis =0)
+    print DISTANCES
+    hist, bins= np.histogram(DISTANCES, bins = int(NBins), range=[0, float(DMax)])
+    #plt.bar(bins, histogram, width= DMax / NBins * 0.9)
+    #plt.show()
     return hist 
 
 
@@ -432,14 +429,10 @@ if __name__ == '__main__':
    #plt.show()
 
    #TESTING GET-2D-HISTOGRAM
-   #DMax = 4
-   #NBins = 20
-   #NSamples = 5000
-   #histogram, bins =  getD2Histogram(Ps, Ns, DMax, NBins, NSamples)
-   #print histogram
-   #print bins
-   #plt.bar(bins, histogram, width= DMax / NBins * 0.9)
-   #plt.show()
+   DMax = 4
+   NBins = 20
+   NSamples = 5
+   histogram =  getD2Histogram(Ps, Ns, DMax, NBins, NSamples)
 
    #TESTING GET-A3-HISTOGRAM
    #NBins = 2
