@@ -108,7 +108,7 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     NSectors = SPoints.shape[1] #A number of sectors equal to the number of points sampled on the sphere
     #Create a 2D histogram that is NShells x NSectors
     hist = np.zeros((NShells, NSectors)) #initialize histogram to zeros
-    #Create histogram bins 
+    #Create histogram bins
     cArray = np.linspace(0, RMax, NSectors*NShells+1) #return array representing the bins of the histogram
     #Generate histogram data
     shell_interval = float(RMax)/NShells #find interval between shells
@@ -124,7 +124,7 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
         hist[shell][sector] += 1 #add data to the histogram
     #Reverse-sort the sectors of each shell (rotation invariant)
     hist = np.fliplr(np.sort(hist))
-    return hist.flatten() #, cArray[0:len(cArray)-1:1] 
+    return hist.flatten() #, cArray[0:len(cArray)-1:1]
 
 
 #Purpose: To create shape histogram with concentric spherical shells and to
@@ -464,7 +464,7 @@ if __name__ == '__main__':
    #print bins1
    #plt.bar(bins1, histogram1, width=3.0/21*0.9)
    #plt.show()
-  
+
    #TESTING GET-2D-HISTOGRAM
    #DMax = 4
    #NBins = 20
@@ -474,7 +474,7 @@ if __name__ == '__main__':
    #print bins
    #plt.bar(bins, histogram, width= DMax / NBins * 0.9)
    #plt.show()
-   
+
    #TESTING GET-A3-HISTOGRAM
    #NBins = 12
    #NSamples = 5000
@@ -483,7 +483,7 @@ if __name__ == '__main__':
    #print bins
    #plt.bar(bins, histogram, width= math.pi / NBins * 0.9)
    #plt.show()
-   
+
    #TESTING GET-SHAPE-SHELL-HISTOGRAM
    #NShells = 10
    #RMax = 2
@@ -510,29 +510,29 @@ if __name__ == '__main__':
            m.loadOffFileExternal(filename)
            (Ps, Ns) = samplePointCloud(m, NRandSamples)
            PointClouds.append(Ps)
-           Normals.append(Ps)
+           Normals.append(Ns)
 
 SPoints = getSphereSamples(2)
 HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 100, 2, 40)
 HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
-HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
-HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
+#HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
+#HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
 
 DSpin = compareHistsEuclidean(HistsSpin)
 DEGI = compareHistsEuclidean(HistsEGI)
-DA3 = compareHistsEuclidean(HistsA3)
-DD2 = compareHistsEuclidean(HistsD2)
+#DA3 = compareHistsEuclidean(HistsA3)
+#DD2 = compareHistsEuclidean(HistsD2)
 
 PRSpin = getPrecisionRecall(DSpin)
 PREGI = getPrecisionRecall(DEGI)
-PRA3 = getPrecisionRecall(DA3)
-PRD2 = getPrecisionRecall(DD2)
+#PRA3 = getPrecisionRecall(DA3)
+#PRD2 = getPrecisionRecall(DD2)
 
 recalls = np.linspace(1.0/9.0, 1.0, 9)
 plt.plot(recalls, PREGI, 'c', label='EGI')
 plt.hold(True)
-plt.plot(recalls, PRA3, 'k', label='A3')
-plt.plot(recalls, PRD2, 'r', label='D2')
+#plt.plot(recalls, PRA3, 'k', label='A3')
+#plt.plot(recalls, PRD2, 'r', label='D2')
 plt.plot(recalls, PRSpin, 'b', label='Spin')
 plt.xlabel('Recall')
 plt.ylabel('Precision')
