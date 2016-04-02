@@ -95,7 +95,8 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
         dist=sum_squares**0.5
         pos = (dist//interval) #determine what interval this distance falls in by integer division
         hist[pos] += 1 #update the histogram value in this interval
-    return hist #cArray[0:len(cArray)-1:1]; used for testing purposes
+    return hist #cArray[0:len(cArray)-1:1]
+
 
 #Purpose: To create shape histogram with concentric spherical shells and
 #sectors within each shell, sorted in decreasing order of number of points
@@ -104,23 +105,27 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
 #RMax (maximum radius), SPoints: A 3 x S array of points sampled evenly on
 #the unit sphere (get these with the function "getSphereSamples")
 def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
-    NSectors = SPoints.shape[1] #A number of sectors equal to the number of
-    #points sampled on the sphere
-
+    NSectors = SPoints.shape[1] #A number of sectors equal to the number of points sampled on the sphere
     #Create a 2D histogram that is NShells x NSectors
     hist = np.zeros((NShells, NSectors)) #initialize histogram to zeros
+    #Create histogram bins 
+    cArray = np.linspace(0, RMax, NSectors*NShells+1) #return array representing the bins of the histogram
+    #Generate histogram data
+    shell_interval = float(RMax)/NShells #find interval between shells
     centroid = np.mean(Ps,1)[:, None]
     Ps_centered = Ps - centroid
-    interval = float(RMax)/NShells
-    for point in Ps_centered.T:
-        tempDist = np.linalg.norm(point)
-        shell = int(tempDist//interval)
+    for point in Ps_centered.T: #for every point in the point cloud
+        #Determine shell
+        dist = np.linalg.norm(point)
+        shell = dist//shell_interval
+        #Determine sector
         dots = np.dot(point, SPoints) #make an array of dot products with the S points
         sector = np.argmax(dots) #sector corresponds to the largest dot product
-        hist[shell][sector] += 1
-    for i in range(NShells):
-        hist[i] = sorted(hist[i], reverse=True)
-    return hist
+        hist[shell][sector] += 1 #add data to the histogram
+    #Reverse-sort the sectors of each shell (rotation invariant)
+    hist = np.fliplr(np.sort(hist))
+    return hist.flatten() #, cArray[0:len(cArray)-1:1] 
+
 
 #Purpose: To create shape histogram with concentric spherical shells and to
 #compute the PCA eigenvalues in each shell
@@ -173,7 +178,7 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
         pos = distance//interval # determine bin by integer division
         # add check to see if pos is out of bounds?
         hist[pos]+=1 #update the histogram value in this interval
-    return hist  #cArray[0:len(cArray)-1:1]; used for testing purposes
+    return hist  #cArray[0:len(cArray)-1:1]
 
 #Purpose: To create shape histogram of the angles between randomly sampled triples of points
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals) (not needed here
@@ -452,6 +457,43 @@ if __name__ == '__main__':
    m.loadFile("models_off/biplane0.off") #Load a mesh
    (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
+
+   #TESTING GET-SHAPE-HISTOGRAM
+   #histogram1, bins1 = getShapeHistogram(Ps, Ns, 21, 3)
+   #print histogram1
+   #print bins1
+   #plt.bar(bins1, histogram1, width=3.0/21*0.9)
+   #plt.show()
+  
+   #TESTING GET-2D-HISTOGRAM
+   #DMax = 4
+   #NBins = 20
+   #NSamples = 5000
+   #histogram, bins =  getD2Histogram(Ps, Ns, DMax, NBins, NSamples)
+   #print histogram
+   #print bins
+   #plt.bar(bins, histogram, width= DMax / NBins * 0.9)
+   #plt.show()
+   
+   #TESTING GET-A3-HISTOGRAM
+   #NBins = 12
+   #NSamples = 5000
+   #histogram, bins =  getA3Histogram(Ps, Ns, NBins, NSamples)
+   #print histogram
+   #print bins
+   #plt.bar(bins, histogram, width= math.pi / NBins * 0.9)
+   #plt.show()
+   
+   #TESTING GET-SHAPE-SHELL-HISTOGRAM
+   #NShells = 10
+   #RMax = 2
+   #SPoints = getSphereSamples() # res is auto-set to 2 (66 sample points)
+   #histogram, bins = getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints)
+   #print histogram
+   #print bins
+   #plt.bar(bins, histogram, width =  float(RMax)/NShells/SPoints.shape[1]*0.9)
+   #plt.show()
+
 
    NRandSamples = 10000 #You can tweak this number
    np.random.seed(100) #For repeatable results randomly sampling
