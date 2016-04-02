@@ -309,19 +309,18 @@ def compareHistsCosine(AllHists):
 #Returns: D (An N x N matrix, where the ij entry is the chi squared
 #distance between the histogram for point cloud i and point cloud j)
 def compareHistsChiSquared(AllHists):
+    # note that this can only be used on histograms with non-zero values
     N = AllHists.shape[1]  # number of columns aka number of point clouds / histograms
     D = np.zeros((N, N))
-    for i in range (N): # could change this to range (N-1) for efficiency?
+    for i in range (N):
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): # could change this to range (i+1, N) for efficiency?
+        for j in range (N): 
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
-            # treat each histogram as a K-dimensional vector
             # dist = 0.5*{(sum from k=1 to K) [ (h1[k]-h2[k])^2 / (h1[k] + h2[k]) ]}
             numerator = (np.subtract(pc1, pc2))**2 # element-wise subtraction, element-wise square
             denominator = np.add(pc1, pc2) # element-wise addition
-            summation = np.sum((numerator/denominator)) # element-wise division, sum over array
-            dist = 0.5*summation # scale summation by half
-            D[i][j] = dist # assign distance value for ij
+            summation = np.sum(numerator/denominator) # element-wise division, sum over array
+            D[i][j] = 0.5*summation # scale & assign distance value for ij
     return D
 
 #Purpose: Helper method to compute the CDF hC for EMD1D
