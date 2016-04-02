@@ -295,12 +295,11 @@ def compareHistsCosine(AllHists):
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
         for j in range (N): # could change this to range (i+1, N) for efficiency?
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
-            # treat each histogram as a K-dimensional vector
             # dist = (v_i dot v_j) / (|v_i|*|v_j|)
             numerator = np.dot(pc1, pc2) # v_i dot v_j
             denominator = np.linalg.norm(pc1)*np.linalg.norm(pc2)
             dist = numerator / denominator
-            D[i][j] = dist # assign distance value for ij
+            D[i][j] = 1-dist # assign cosine distance value for ij
     return D
 
 #Purpose: To compute the cosine distance between a set
