@@ -262,7 +262,6 @@ def makeAllHistograms(PointClouds, Normals, histFunction, *args):
 # h'[i] = h[i] / sum (from k = 1 to K) h[k]
 def normalizeHist(hist):
     sumHist = np.sum(hist) # sum (from k=1 to K) h[k] #fixed
-    #hist_prime = hist / float(sumHist) # use broadcasting; h'[i] = h[i] / sumHist
     hist_prime = hist / float(sumHist) # use broadcasting; h'[i] = h[i] / sumHist
     return hist_prime
 
@@ -275,12 +274,10 @@ def normalizeHist(hist):
 def compareHistsEuclidean(AllHists):
     N = AllHists.shape[1] # number of columns aka number of point clouds / histograms
     D = np.zeros((N, N))
-    # not sure if normalization is needed here
-    for i in range (N): # could change this to range (N-1) for efficiency?
+    for i in range (N): 
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): # could change this to range (i+1, N) for efficiency?
+        for j in range (N): 
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
-            # treat each histogram as a K-dimensional vector
             # dist = sqrt ( (pc1_1 - pc2_1)^2 + ... + (pc1_K - pc2_K)^2 )
             pc1_pc2 = np.subtract(pc1, pc2) # element-wise subtraction
             square = pc1_pc2**2 # element-wise square
