@@ -103,15 +103,30 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     centroid = np.mean(Ps,1)[:, None]
     Ps_centered = Ps - centroid
     for point in Ps_centered.T: #for every point in the point cloud
-        #Determine shell
         dist = np.linalg.norm(point)
         shell = dist//shell_interval
-        #Determine sector
+        print shell
         dots = np.dot(point, SPoints) #make an array of dot products with the S points
         sector = np.argmax(dots) #sector corresponds to the largest dot product
+        print sector
         hist[shell][sector] += 1 #add data to the histogram
+    print hist
     #Reverse-sort the sectors of each shell (rotation invariant)
     hist = np.fliplr(np.sort(hist))
+   
+    #potential optimization 
+    print "--method2--"
+    histB = np.zeros((NShells, NSectors)) #initialize histogram to zero
+    distancesB = np.linalg.norm(Ps_centered, axis = 0) #calculate point distance from origin
+    shells = np.linalg.norm(Ps_centered, axis = 0)//(float(RMax)/NShells) #calculate point distance from origin
+    #shells, Dbins = np`.histogram(distancesB, bins = int(NShells), range=[0, float(RMax)]) #generate histogram
+    dots2 = np.dot(Ps_centered.T, SPoints)
+    sec = np.argmax(dots2, axis = 1)
+    #secs, Sbins = np.histogram(sec, bins = NSectors, range=[0, NSectors]) #generate histogram
+    print shells
+    print sec
+    
+    
     return hist.flatten() #, cArray[0:len(cArray)-1:1]
 
 
@@ -462,11 +477,11 @@ def getPrecisionRecall(D, NPerClass = 10):
 if __name__ == '__main__':
    m = PolyMesh()
    m.loadFile("models_off/biplane0.off") #Load a mesh
-   (Ps, Ns) = samplePointCloud(m, 5) #Sample 20,000 points and associated normals
+   (Ps, Ns) = samplePointCloud(m, 20) #Sample 20,000 points and associated normals
    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
 
    #TESTING GET-SHAPE-HISTOGRAM
-   histogram1 = getShapeHistogram(Ps, Ns, 21, 3)
+   #histogram1 = getShapeHistogram(Ps, Ns, 21, 3)
    #print histogram1
    #print bins1
    #plt.bar(bins1, histogram1, width=3.0/21*0.9)
@@ -492,10 +507,10 @@ if __name__ == '__main__':
    #plt.show()
 
    #TESTING GET-SHAPE-SHELL-HISTOGRAM
-   #NShells = 10
-   #RMax = 2
-   #SPoints = getSphereSamples() # res is auto-set to 2 (66 sample points)
-   #histogram, bins = getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints)
+   NShells = 4
+   RMax = 2
+   SPoints = getSphereSamples() # res is auto-set to 2 (66 sample points)
+   histogram = getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints)
    #print histogram
    #print bins
    #plt.bar(bins, histogram, width =  float(RMax)/NShells/SPoints.shape[1]*0.9)
