@@ -143,7 +143,6 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
     P2A = Ps[:, sampledPairs[:,1]]
     TEMP = np.subtract(P1A, P2A)
     DISTANCES = np.linalg.norm(TEMP, axis =0)
-    print DISTANCES
     hist, bins= np.histogram(DISTANCES, bins = int(NBins), range=[0, float(DMax)])
     #plt.bar(bins, histogram, width= DMax / NBins * 0.9)
     #plt.show()
@@ -315,13 +314,6 @@ def compareHistsChiSquared(AllHists):
             D[i][j] = 0.5*summation # scale & assign distance value for ij
     return D
 
-#Purpose: Helper method to compute the CDF hC for EMD1D
-#Inputs: hist (histogram); k
-def hC(hist, k):
-    # hC[k] = (sum from a=0 to k) h[a]
-    truncatedHist = hist[0:k+1:1] # splice array; somehow it doesn't throw an IOOB error if k=K
-    result = np.sum(truncatedHist) # sum over array
-    return result
 
 #Purpose: To compute the 1D Earth mover's distance between a set
 #of histograms (note that this only makes sense for 1D histograms)
@@ -331,22 +323,16 @@ def hC(hist, k):
 #distance between the histogram for point cloud i and point cloud j)
 def compareHistsEMD1D(AllHists):
     N = AllHists.shape[1]  # number of columns aka number of point clouds / histograms
-    K = AllHists.shape[0]  # number of rows aka number of bins in the histogram
     D = np.zeros((N, N))
-    for i in range (N): # could change this to range (N-1) for efficiency?
+    for i in range (N): # 
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): # could change this to range (i+1, N) for efficiency?
+        for j in range (N):
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
-            summation = 0
-            # treat each histogram as a K-dimensional vector
             # dist = (sum from k = 1 to K) | hC_i[k] - hC_j[k]|
-            for k in range (1, K+1):
-            # is there a way to avoid a third for-loop?
-                hC_i=hC(pc1, k) # hC_i[k]
-                hC_j=hC(pc2, k) # hC_j[k]
-                summation += np.absolute(np.subtract(hC_i,hC_j)) # | hC_i[k] - hC_j[k]| ; add to sum
-            dist = summation
-            D[i][j] = dist # assign distance value for ij
+            hci= np.cumsum(pc1)
+            hcj= np.cumsum(pc2)
+            emd = np.sum(np.absolute(np.subtract(hci,hcj)))
+            D[i][j] = emd 
     return D
 
 
@@ -416,23 +402,57 @@ def getPrecisionRecall(D, NPerClass = 10):
 
 
 if __name__ == '__main__':
-   m = PolyMesh()
-   m.loadFile("models_off/biplane0.off") #Load a mesh
-   (Ps, Ns) = samplePointCloud(m, 10000) #Sample 20,000 points and associated normals
-   exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
+    #NRandSamples = 10000 #You can tweak this number
+    #np.random.seed(100) #For repeatable results randomly sampling
+    #Load in and sample all meshes
+    #PointClouds = []
+    #Normals = []
+    #for i in range(len(POINTCLOUD_CLASSES)):
+    #for i in range(1):
+        #print "LOADING CLASS %i of %i..."%(i, len(POINTCLOUD_CLASSES))
+        #PCClass = []
+        #for j in range(NUM_PER_CLASS):
+        #for j in range(3):
+            #m = PolyMesh()
+            #filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
+            #print "Loading ", filename 
+            #m.loadOffFileExternal(filename)
+            #(Ps, Ns) = samplePointCloud(m, NRandSamples)
+            #PointClouds.append(Ps)
+            #Normals.append(Ns)
+    #Ps0 = PointClouds[0]
+    #Ps1 = PointClouds[1] 
+    #Ps2 = PointClouds[2] 
+    #DMax = 3 
+    #NBins = 4
+    #Samples = 100
+    #ist0 = getD2Histogram(Ps0, Normals[0], DMax, NBins, NSamples) 
+    #print hist0
+    #hist1 = getD2Histogram(Ps1, Normals[1], DMax, NBins, NSamples) 
+    #print hist1
+    #hist2 = getD2Histogram(Ps2, Normals[0], DMax, NBins, NSamples) 
+    #print hist2
+    #AllHists = np.zeros((4,3))
+    #AllHists [:,0] = hist0
+    #AllHists [:,1] = hist1
+    #AllHists [:,2] = hist2
+    #D = compareHistsEMD1D(AllHists)
+    #print D
+   #m = PolyMesh()
+   #m.loadFile("models_off/biplane0.off") #Load a mesh
+   #(Ps, Ns) = samplePointCloud(m, 10000) #Sample 20,000 points and associated normals
+   #exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
 
    #TESTING GET-SHAPE-HISTOGRAM
    #histogram1 = getShapeHistogram(Ps, Ns, 21, 3)
-   #print histogram1
-   #print bins1
    #plt.bar(bins1, histogram1, width=3.0/21*0.9)
    #plt.show()
 
    #TESTING GET-2D-HISTOGRAM
-   DMax = 4
-   NBins = 20
-   NSamples = 5
-   histogram =  getD2Histogram(Ps, Ns, DMax, NBins, NSamples)
+   #DMax = 4
+   #NBins = 20
+   #NSamples = 5
+   #histogram =  getD2Histogram(Ps, Ns, DMax, NBins, NSamples)
 
    #TESTING GET-A3-HISTOGRAM
    #NBins = 2
@@ -446,8 +466,6 @@ if __name__ == '__main__':
    #RMax = 2
    #SPoints = getSphereSamples() # res is auto-set to 2 (66 sample points)
    #histogram = getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints)
-   #print histogram
-   #print bins
    #plt.bar(bins, histogram, width =  float(RMax)/NShells/SPoints.shape[1]*0.9)
    #plt.show()
    
@@ -456,24 +474,7 @@ if __name__ == '__main__':
    #Extent = 2
    #Dim = 1000
    #histogram = getSpinImage(Ps, Ns, NAngles, Extent, Dim)
-
-   #NRandSamples = 10000 #You can tweak this number
-   #np.random.seed(100) #For repeatable results randomly sampling
-   #Load in and sample all meshes
-   #PointClouds = []
-   #Normals = []
-   #for i in range(len(POINTCLOUD_CLASSES)):
-    #   print "LOADING CLASS %i of %i..."%(i, len(POINTCLOUD_CLASSES))
-     #  PCClass = []
-      # for j in range(NUM_PER_CLASS):
-       #    m = PolyMesh()
-        #   filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
-         #  print "Loading ", filename
-          # m.loadOffFileExternal(filename)
-          # (Ps, Ns) = samplePointCloud(m, NRandSamples)
-          # PointClouds.append(Ps)
-          # Normals.append(Ns)
-
+   
 #SPoints = getSphereSamples(2)
 #HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 100, 2, 40)
 #HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
