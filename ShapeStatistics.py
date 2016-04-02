@@ -138,9 +138,8 @@ def getShapeHistogramPCA(Ps, Ns, NShells, RMax):
 #to compute distances)
 def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
     hist = np.zeros(NBins)
-    interval = float(DMax)/NBins # get histogram intervals
-    cArray = np.linspace(0, DMax, NBins+1)
     sampledPairs = np.random.randint(len(Ps[0]), size = (NSamples, 2.)) # get random point pairs
+    distances = np.array([])
     for i in range (0, NSamples):
         p1 = sampledPairs[i][0] # get index of point in Ps
         p2 = sampledPairs[i][1] # get index of point in Ps
@@ -148,18 +147,11 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
             continue # duplicate point; do not evaluate distance, go to next pair
         P1 = Ps[:,p1] # get point from Ps
         P2 = Ps[:,p2] # get point from Ps
-        #calculate distance: d = [(p1_x-p2_x)^2 + (p1_y-p2_y)^2 + (p1_z-p2_z)^2] ^ 0.5
         temp = np.subtract(P1, P2) # p1 - p2
-        temp2 = temp**2 # square each term
-        temp3 = np.sum(temp2)
-        distance = temp3**0.5 # take square root
-        # add distance to histogram
-        pos = distance//interval # determine bin by integer division
-        # add check to see if pos is out of bounds?
-        if distance>DMax: #fixed
-            continue
-        hist[pos]+=1 #update the histogram value in this interval
-    return hist  #cArray[0:len(cArray)-1:1]
+        distances = np.append(distances, np.linalg.norm(temp))
+    hist, bins= np.histogram(distances, bins = int(NBins), range=[0, float(DMax)])
+    return hist 
+
 
 #Purpose: To create shape histogram of the angles between randomly sampled triples of points
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals) (not needed here
