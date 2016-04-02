@@ -105,10 +105,9 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     for point in Ps_centered.T: #for every point in the point cloud
         dist = np.linalg.norm(point)
         shell = dist//shell_interval
-        print shell
         dots = np.dot(point, SPoints) #make an array of dot products with the S points
         sector = np.argmax(dots) #sector corresponds to the largest dot product
-        print sector
+        print [shell, sector]
         hist[shell][sector] += 1 #add data to the histogram
     print hist
     #Reverse-sort the sectors of each shell (rotation invariant)
@@ -119,13 +118,12 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     histB = np.zeros((NShells, NSectors)) #initialize histogram to zero
     distancesB = np.linalg.norm(Ps_centered, axis = 0) #calculate point distance from origin
     shells = np.linalg.norm(Ps_centered, axis = 0)//(float(RMax)/NShells) #calculate point distance from origin
-    #shells, Dbins = np`.histogram(distancesB, bins = int(NShells), range=[0, float(RMax)]) #generate histogram
     dots2 = np.dot(Ps_centered.T, SPoints)
-    sec = np.argmax(dots2, axis = 1)
-    #secs, Sbins = np.histogram(sec, bins = NSectors, range=[0, NSectors]) #generate histogram
-    print shells
-    print sec
-    
+    sectors = np.argmax(dots2, axis = 1)
+    histB, xedges, yedges = np.histogram2d(shells, sectors, bins=[int(NShells), int(NSectors)], range = [[0, float(RMax)],[0, float(NSectors)]]) 
+    print histB
+    print xedges
+    print yedges
     
     return hist.flatten() #, cArray[0:len(cArray)-1:1]
 
@@ -477,7 +475,7 @@ def getPrecisionRecall(D, NPerClass = 10):
 if __name__ == '__main__':
    m = PolyMesh()
    m.loadFile("models_off/biplane0.off") #Load a mesh
-   (Ps, Ns) = samplePointCloud(m, 20) #Sample 20,000 points and associated normals
+   (Ps, Ns) = samplePointCloud(m, 5) #Sample 20,000 points and associated normals
    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
 
    #TESTING GET-SHAPE-HISTOGRAM
