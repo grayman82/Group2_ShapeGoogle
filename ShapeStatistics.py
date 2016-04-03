@@ -200,20 +200,31 @@ def getSpinImage(Ps, Ns, NAngles, Extent, Dim):
     (eigs, V) = doPCA(Ps) # eigVals in decreasing order w. corresponding eigVecs in V
     Ps_aligned = np.dot(V, Ps) # project point cloud onto PCA axes
     # rotate the point cloud around axis of greatest variation (x-axis)
-    angles_of_rotation = np.linspace(0, 360, NAngles+1)
-    for i in range(len(angles_of_rotation)-1):
-        theta = np.radians(angles_of_rotation[i])
-        vals = np.array([1.0, 0.0, 0.0, 0.0, np.cos(theta), np.sin(-theta), 0.0, np.sin(theta), np.cos(theta)])
-        R = np.reshape(vals, (3, 3)) # rotation matrix
-        Ps_rotated = np.dot(R, Ps_aligned)
+    angles = np.linspace(0, 2*np.pi, NAngles+1)
+    cosA = np.around(np.cos(angles[:len(angles)-1:1]), 3)
+    sinA = np.around(np.sin(angles[:len(angles)-1:1]), 3)
+    r2 = np.zeros((NAngles, 3))
+    r2[:, 1] = np.transpose(cosA)
+    r2[:, 2] = np.transpose(-sinA)
+    r3 = np.zeros((NAngles, 3))
+    r3[:, 1] = np.transpose(sinA)
+    r3[:, 2] = np.transpose(cosA)
+    y_rot = np.dot(r2, Ps_aligned)
+    z_rot = np.dot(r3, Ps_aligned)
+    for i in range(NAngles):
+        p = np.append(y_rot[i, :], z_rot[i, :])
+        p = np.reshape(p, (2, len(Ps.T)))
         # Bin the point cloud projected onto the other two axes
-        H, xedges, yedges = np.histogram2d(Ps_rotated[1,:], Ps_rotated[2,:], bins=Dim, range = [[-Extent, Extent],[-Extent, Extent]]) 
+        H, xedges, yedges = np.histogram2d(p[0,:], p[1,:], bins=Dim, range = [[-Extent, Extent],[-Extent, Extent]]) 
         hist = hist + H # sum images
-    fig1 = plt.figure()
-    plt.pcolormesh(xedges, yedges, hist)
-    plt.show() # display spin image
+    #print hist
+    #fig1 = plt.figure()
+    #plt.pcolormesh(xedges, yedges, hist)
+    #plt.show() # display spin image
     return hist.flatten()
 
+    
+    
 #Purpose: To create a histogram of spherical harmonic magnitudes in concentric
 #spheres after rasterizing the point cloud to a voxel grid
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals, not used here),
@@ -404,7 +415,7 @@ def getPrecisionRecall(D, NPerClass = 10):
 if __name__ == '__main__':
    m = PolyMesh()
    m.loadFile("models_off/biplane0.off") #Load a mesh
-   (Ps, Ns) = samplePointCloud(m, 10000) #Sample 20,000 points and associated normals
+   (Ps, Ns) = samplePointCloud(m, 5) #Sample 20,000 points and associated normals
    exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
 
    #TESTING GET-SHAPE-HISTOGRAM
@@ -415,10 +426,10 @@ if __name__ == '__main__':
    #plt.show()
 
    #TESTING GET-2D-HISTOGRAM
-   DMax = 4
-   NBins = 20
-   NSamples = 5
-   histogram =  getD2Histogram(Ps, Ns, DMax, NBins, NSamples)
+   #DMax = 4
+   #NBins = 20
+   #NSamples = 5
+   #histogram =  getD2Histogram(Ps, Ns, DMax, NBins, NSamples)
 
    #TESTING GET-A3-HISTOGRAM
    #NBins = 2
@@ -438,10 +449,10 @@ if __name__ == '__main__':
    #plt.show()
    
    #TESTING GET-SPIN-IMAGE
-   #NAngles = 720
-   #Extent = 2
-   #Dim = 1000
-   #histogram = getSpinImage(Ps, Ns, NAngles, Extent, Dim)
+   NAngles = 4#720
+   Extent = 2#2
+   Dim = 2#1000
+   histogram = getSpinImage(Ps, Ns, NAngles, Extent, Dim)
 
    #NRandSamples = 10000 #You can tweak this number
    #np.random.seed(100) #For repeatable results randomly sampling
