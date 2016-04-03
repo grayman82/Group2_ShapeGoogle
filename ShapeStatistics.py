@@ -84,7 +84,7 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
     Ps_centered = Ps - centroid #center point cloud at origin
     distances = np.linalg.norm(Ps_centered, axis = 0) #calculate point distance from origin
     hist, bins = np.histogram(distances, bins = int(NShells), range=[0, float(RMax)]) #generate histogram
-    return hist 
+    return hist
 
 #Purpose: To create shape histogram with concentric spherical shells and
 #sectors within each shell, sorted in decreasing order of number of points
@@ -102,7 +102,7 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     dots = np.dot(Ps_centered.T, SPoints) #calculate dot products
     sectors = np.argmax(dots, axis = 1) #calculate sector values
     #generate histogram
-    hist, xedges, yedges = np.histogram2d(shells, sectors, bins=[int(NShells), int(NSectors)], range = [[0.0, float(NShells)],[0.0, float(NSectors)]]) 
+    hist, xedges, yedges = np.histogram2d(shells, sectors, bins=[int(NShells), int(NSectors)], range = [[0.0, float(NShells)],[0.0, float(NSectors)]])
     hist = np.fliplr(np.sort(hist)) # reverse-sort sectors in each shell
     return hist.flatten()
 
@@ -150,7 +150,7 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
         temp = np.subtract(P1, P2) # p1 - p2
         distances = np.append(distances, np.linalg.norm(temp))
     hist, bins= np.histogram(distances, bins = int(NBins), range=[0, float(DMax)])
-    return hist 
+    return hist
 
 
 #Purpose: To create shape histogram of the angles between randomly sampled triples of points
@@ -179,7 +179,7 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist, bins= np.histogram(angles, bins = int(NBins), range=[0, float(np.pi)])
     #plt.bar(bins, histogram, width= np.pi / NBins * 0.9)
     #plt.show()
-    return hist 
+    return hist
 
 #Purpose: To create the Extended Gaussian Image by binning normals to
 #sphere directions after rotating the point cloud to align with its principal axes
@@ -191,16 +191,9 @@ def getEGIHistogram(Ps, Ns, SPoints):
     hist = np.zeros(S)
     (eigs, V) = doPCA(Ps)
     Ns_aligned = np.dot(V, Ns)
-<<<<<<< HEAD
-    for normal in Ns_aligned.T:
-        dots = np.dot(normal, SPoints)
-        pos = np.argmax(dots)
-        hist[pos] += 1
-=======
     dots2 = np.dot(Ns_aligned.T, SPoints)
     pos = np.argmax(dots2, axis = 1)
     hist, bins = np.histogram(pos, bins = int(S), range=[0, float(S)]) #generate histogram
->>>>>>> 901113a084eade29e26dde946b989da54bc1c696
     return hist
 
 #Purpose: To create an image which stores the amalgamation of rotating
@@ -222,7 +215,7 @@ def getSpinImage(Ps, Ns, NAngles, Extent, Dim):
         R = np.reshape(vals, (3, 3)) # rotation matrix
         Ps_rotated = np.dot(R, Ps_aligned)
         # Bin the point cloud projected onto the other two axes
-        H, xedges, yedges = np.histogram2d(Ps_rotated[1,:], Ps_rotated[2,:], bins=Dim, range = [[-Extent, Extent],[-Extent, Extent]]) 
+        H, xedges, yedges = np.histogram2d(Ps_rotated[1,:], Ps_rotated[2,:], bins=Dim, range = [[-Extent, Extent],[-Extent, Extent]])
         hist = hist + H # sum images
     fig1 = plt.figure()
     plt.pcolormesh(xedges, yedges, hist)
@@ -281,9 +274,9 @@ def normalizeHist(hist):
 def compareHistsEuclidean(AllHists):
     N = AllHists.shape[1] # number of columns aka number of point clouds / histograms
     D = np.zeros((N, N))
-    for i in range (N): 
+    for i in range (N):
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): 
+        for j in range (N):
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
             # dist = sqrt ( (pc1_1 - pc2_1)^2 + ... + (pc1_K - pc2_K)^2 )
             pc1_pc2 = np.subtract(pc1, pc2) # element-wise subtraction
@@ -440,14 +433,7 @@ if __name__ == '__main__':
    m = PolyMesh()
    m.loadFile("models_off/biplane0.off") #Load a mesh
    (Ps, Ns) = samplePointCloud(m, 10000) #Sample 20,000 points and associated normals
-   exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
-
-<<<<<<< HEAD
-   getEGIHistogram(Ps, Ns, getSphereSamples(2))
-
-   NRandSamples = 10000 #You can tweak this number
-   np.random.seed(100) #For repeatable results randomly sampling
-=======
+   exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud\
    #TESTING GET-SHAPE-HISTOGRAM
    #histogram1 = getShapeHistogram(Ps, Ns, 21, 3)
    #print histogram1
@@ -483,7 +469,7 @@ if __name__ == '__main__':
    #print bins
    #plt.bar(bins, histogram, width =  float(RMax)/NShells/SPoints.shape[1]*0.9)
    #plt.show()
-   
+
    #TESTING GET-SPIN-IMAGE
    #NAngles = 720
    #Extent = 2
@@ -492,7 +478,6 @@ if __name__ == '__main__':
 
    #NRandSamples = 10000 #You can tweak this number
    #np.random.seed(100) #For repeatable results randomly sampling
->>>>>>> 901113a084eade29e26dde946b989da54bc1c696
    #Load in and sample all meshes
    #PointClouds = []
    #Normals = []
