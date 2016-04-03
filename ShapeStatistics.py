@@ -84,7 +84,7 @@ def getShapeHistogram(Ps, Ns, NShells, RMax):
     Ps_centered = Ps - centroid #center point cloud at origin
     distances = np.linalg.norm(Ps_centered, axis = 0) #calculate point distance from origin
     hist, bins = np.histogram(distances, bins = int(NShells), range=[0, float(RMax)]) #generate histogram
-    return hist 
+    return hist
 
 #Purpose: To create shape histogram with concentric spherical shells and
 #sectors within each shell, sorted in decreasing order of number of points
@@ -102,7 +102,7 @@ def getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints):
     dots = np.dot(Ps_centered.T, SPoints) #calculate dot products
     sectors = np.argmax(dots, axis = 1) #calculate sector values
     #generate histogram
-    hist, xedges, yedges = np.histogram2d(shells, sectors, bins=[int(NShells), int(NSectors)], range = [[0.0, float(NShells)],[0.0, float(NSectors)]]) 
+    hist, xedges, yedges = np.histogram2d(shells, sectors, bins=[int(NShells), int(NSectors)], range = [[0.0, float(NShells)],[0.0, float(NSectors)]])
     hist = np.fliplr(np.sort(hist)) # reverse-sort sectors in each shell
     return hist.flatten()
 
@@ -143,11 +143,11 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
     P2A = Ps[:, sampledPairs[:,1]]
     TEMP = np.subtract(P1A, P2A)
     DISTANCES = np.linalg.norm(TEMP, axis =0)
-    print DISTANCES
+    #print DISTANCES
     hist, bins= np.histogram(DISTANCES, bins = int(NBins), range=[0, float(DMax)])
     #plt.bar(bins, histogram, width= DMax / NBins * 0.9)
     #plt.show()
-    return hist 
+    return hist
 
 
 #Purpose: To create shape histogram of the angles between randomly sampled triples of points
@@ -171,7 +171,7 @@ def getA3Histogram(Ps, Ns, NBins, NSamples):
     hist, bins= np.histogram(ANGLES, bins = int(NBins), range=[0, float(np.pi)])
     #plt.bar(bins, histogram, width= np.pi / NBins * 0.9)
     #plt.show()
-    return hist 
+    return hist
 
 #Purpose: To create the Extended Gaussian Image by binning normals to
 #sphere directions after rotating the point cloud to align with its principal axes
@@ -215,7 +215,7 @@ def getSpinImage(Ps, Ns, NAngles, Extent, Dim):
         p = np.append(y_rot[i, :], z_rot[i, :])
         p = np.reshape(p, (2, len(Ps.T)))
         # Bin the point cloud projected onto the other two axes
-        H, xedges, yedges = np.histogram2d(p[0,:], p[1,:], bins=Dim, range = [[-Extent, Extent],[-Extent, Extent]]) 
+        H, xedges, yedges = np.histogram2d(p[0,:], p[1,:], bins=Dim, range = [[-Extent, Extent],[-Extent, Extent]])
         hist = hist + H # sum images
     #print hist
     #fig1 = plt.figure()
@@ -223,8 +223,8 @@ def getSpinImage(Ps, Ns, NAngles, Extent, Dim):
     #plt.show() # display spin image
     return hist.flatten()
 
-    
-    
+
+
 #Purpose: To create a histogram of spherical harmonic magnitudes in concentric
 #spheres after rasterizing the point cloud to a voxel grid
 #Inputs: Ps (3 x N point cloud), Ns (3 x N array of normals, not used here),
@@ -277,9 +277,9 @@ def normalizeHist(hist):
 def compareHistsEuclidean(AllHists):
     N = AllHists.shape[1] # number of columns aka number of point clouds / histograms
     D = np.zeros((N, N))
-    for i in range (N): 
+    for i in range (N):
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): 
+        for j in range (N):
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
             # dist = sqrt ( (pc1_1 - pc2_1)^2 + ... + (pc1_K - pc2_K)^2 )
             D[i][j] = np.linalg.norm(np.subtract(pc1, pc2))
@@ -317,7 +317,7 @@ def compareHistsChiSquared(AllHists):
     D = np.zeros((N, N))
     for i in range (N):
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
-        for j in range (N): 
+        for j in range (N):
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
             # dist = 0.5*{(sum from k=1 to K) [ (h1[k]-h2[k])^2 / (h1[k] + h2[k]) ]}
             numerator = (np.subtract(pc1, pc2))**2 # element-wise subtraction, element-wise square
@@ -335,7 +335,7 @@ def compareHistsChiSquared(AllHists):
 def compareHistsEMD1D(AllHists):
     N = AllHists.shape[1]  # number of columns aka number of point clouds / histograms
     D = np.zeros((N, N))
-    for i in range (N): # 
+    for i in range (N): #
         pc1 = normalizeHist(AllHists[:, i]) # normalize histogram i
         for j in range (N):
             pc2 = normalizeHist(AllHists[:, j]) # normalize histogram j
@@ -343,7 +343,7 @@ def compareHistsEMD1D(AllHists):
             hci= np.cumsum(pc1)
             hcj= np.cumsum(pc2)
             emd = np.sum(np.absolute(np.subtract(hci,hcj)))
-            D[i][j] = emd 
+            D[i][j] = emd
     return D
 
 
@@ -476,34 +476,48 @@ if __name__ == '__main__':
 
 SPoints = getSphereSamples(2)
 
-
-
-#HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 100, 2, 40)
-HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
-HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
-HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
-
-#DSpin = compareHistsEuclidean(HistsSpin)
-DEGI = compareHistsEuclidean(HistsEGI)
-DA3 = compareHistsEuclidean(HistsA3)
-DD2 = compareHistsEuclidean(HistsD2)
-
-#PRSpin = getPrecisionRecall(DSpin)
-PREGI = getPrecisionRecall(DEGI)
-PRA3 = getPrecisionRecall(DA3)
-PRD2 = getPrecisionRecall(DD2)
-
-recalls = np.linspace(1.0/9.0, 1.0, 9)
-plt.plot(recalls, PREGI, 'c', label='EGI')
-plt.hold(True)
-plt.plot(recalls, PRA3, 'k', label='A3')
-plt.plot(recalls, PRD2, 'r', label='D2')
-#plt.plot(recalls, PRSpin, 'b', label='Spin')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.legend()
-plt.show()
-
+# ##Graph for all Descriptor methods
+#
+# #HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 360, 1.8, 180) #100, 2, 40
+# HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
+# HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
+# HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
+# HistShape = makeAllHistograms(PointClouds, Normals, getShapeHistogram, 10000, 3)
+# HistShapeSect = makeAllHistograms(PointClouds, Normals, getShapeShellHistogram, 100000, 3, SPoints)
+# HistShapePCA = makeAllHistograms(PointClouds, Normals, getShapeHistogramPCA, 100000, 3)
+#
+# #DSpin = compareHistsEuclidean(HistsSpin)
+# DEGI = compareHistsEuclidean(HistsEGI)
+# DA3 = compareHistsEuclidean(HistsA3)
+# DD2 = compareHistsEuclidean(HistsD2)
+# DShp = compareHistsEuclidean(HistShape)
+# DShpSct = compareHistsEuclidean(HistShapeSect)
+# DShpPCA = compareHistsEuclidean(HistShapePCA)
+#
+# #PRSpin = getPrecisionRecall(DSpin)
+# PREGI = getPrecisionRecall(DEGI)
+# PRA3 = getPrecisionRecall(DA3)
+# PRD2 = getPrecisionRecall(DD2)
+# PRShp = getPrecisionRecall(DShp)
+# PRShpSct = getPrecisionRecall(DShpSct)
+# PRShpPCA = getPrecisionRecall(DShpPCA)
+#
+#
+# recalls = np.linspace(1.0/9.0, 1.0, 9)
+# plt.plot(recalls, PREGI, 'c', label='EGI')
+# plt.hold(True)
+# plt.plot(recalls, PRA3, 'k', label='A3')
+# plt.plot(recalls, PRD2, 'r', label='D2')
+# plt.plot(recalls, PRShp, 'b', label='ShapeShell')
+# plt.plot(recalls, PRShpSct, 'y', label='ShapeShellSector')
+# plt.plot(recalls, PRShpPCA, 'm', label='ShapeShellPCA')
+# #plt.plot(recalls, PRSpin, 'b', label='Spin')
+#
+# plt.xlabel('Recall')
+# plt.ylabel('Precision')
+# plt.title('Recall Graph or all Descriptors')
+# plt.legend()
+# plt.show()
 
 ## Graph for Basic Shell Histogram
 
@@ -569,7 +583,7 @@ plt.show()
 # plt.show()
 
 
-## Graph for Distance Metrics
+## Graph for Distance Metrics D2Histograms
 # HistD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
 #
 # DEucl = compareHistsEuclidean(HistD2)
@@ -596,6 +610,68 @@ plt.show()
 # plt.show()
 
 
+
+
+# Graph for Distance Metrics EGI
+HistEG = makeAllHistograms(PointClouds, Normals, getEGIHistogram, getSphereSamples(2))
+
+DEucl = compareHistsEuclidean(HistEG)
+DCos = compareHistsCosine(HistEG)
+DChi = compareHistsChiSquared(HistEG)
+DEMD1D = compareHistsEMD1D(HistEG)
+
+PRDEucl = getPrecisionRecall(DEucl)
+PRDCos = getPrecisionRecall(DCos)
+PRDChi = getPrecisionRecall(DChi)
+PRDEMD1D = getPrecisionRecall(DEMD1D)
+
+
+recalls = np.linspace(1.0/9.0, 1.0, 9)
+plt.plot(recalls, PRDEucl, 'c', label='Euclidean')
+plt.hold(True)
+plt.plot(recalls, PRDCos, 'k', label='Cosine')
+plt.plot(recalls, PRDChi, 'r', label='Chi Squared')
+plt.plot(recalls, PRDEMD1D, 'b', label='DEMD1D')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('getEGIHistogram (res 2) with Varying Distance Metrics')
+plt.legend()
+plt.show()
+
+
+
+
+## Recall Graph for EGI
+
+
+# HistsEG1 = makeAllHistograms(PointClouds, Normals, getEGIHistogram, getSphereSamples(2))
+# HistsEG2 = makeAllHistograms(PointClouds, Normals, getEGIHistogram, getSphereSamples(3))
+# HistsEG3 = makeAllHistograms(PointClouds, Normals, getEGIHistogram, getSphereSamples(4))
+# HistsEG4 = makeAllHistograms(PointClouds, Normals, getEGIHistogram, getSphereSamples(5))
+#
+#
+# DHistsEG1 = compareHistsEuclidean(HistsEG1)
+# DHistsEG2 = compareHistsEuclidean(HistsEG2)
+# DHistsEG3 = compareHistsEuclidean(HistsEG3)
+# DHistsEG4 = compareHistsEuclidean(HistsEG4)
+#
+# PRHistEG1 = getPrecisionRecall(DHistsEG1)
+# PRHistEG2 = getPrecisionRecall(DHistsEG2)
+# PRHistEG3 = getPrecisionRecall(DHistsEG3)
+# PRHistEG4 = getPrecisionRecall(DHistsEG4)
+#
+#
+# recalls = np.linspace(1.0/9.0, 1.0, 9)
+# plt.plot(recalls, PRHistEG1, 'c', label='res = 2')
+# plt.hold(True)
+# plt.plot(recalls, PRHistEG2, 'k', label='res = 3')
+# plt.plot(recalls, PRHistEG3, 'r', label='res = 4')
+# plt.plot(recalls, PRHistEG4, 'b', label='res = 5')
+# plt.xlabel('Recall')
+# plt.ylabel('Precision')
+# plt.title('Extended Gaussian Image Varying Sphere (random seed = 100)')
+# plt.legend()
+# plt.show()
 
     #TODO: Finish this, run experiments.  Also in the above code, you might
     #just want to load one point cloud and test your histograms on that first
