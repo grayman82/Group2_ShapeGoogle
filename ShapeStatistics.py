@@ -143,6 +143,7 @@ def getD2Histogram(Ps, Ns, DMax, NBins, NSamples):
     P2A = Ps[:, sampledPairs[:,1]]
     TEMP = np.subtract(P1A, P2A)
     DISTANCES = np.linalg.norm(TEMP, axis =0)
+    print DISTANCES
     hist, bins= np.histogram(DISTANCES, bins = int(NBins), range=[0, float(DMax)])
     #plt.bar(bins, histogram, width= DMax / NBins * 0.9)
     #plt.show()
@@ -199,15 +200,24 @@ def getSpinImage(Ps, Ns, NAngles, Extent, Dim):
     (eigs, V) = doPCA(Ps) # eigVals in decreasing order w. corresponding eigVecs in V
     Ps_aligned = np.dot(V, Ps) # project point cloud onto PCA axes
     # rotate the point cloud around axis of greatest variation (x-axis)
-    angles_of_rotation = np.linspace(0, 360, NAngles+1)
-    for i in range(len(angles_of_rotation)-1):
-        theta = np.radians(angles_of_rotation[i])
-        vals = np.array([1.0, 0.0, 0.0, 0.0, np.cos(theta), np.sin(-theta), 0.0, np.sin(theta), np.cos(theta)])
-        R = np.reshape(vals, (3, 3)) # rotation matrix
-        Ps_rotated = np.dot(R, Ps_aligned)
+    angles = np.linspace(0, 2*np.pi, NAngles+1)
+    cosA = np.around(np.cos(angles[:len(angles)-1:1]), 3)
+    sinA = np.around(np.sin(angles[:len(angles)-1:1]), 3)
+    r2 = np.zeros((NAngles, 3))
+    r2[:, 1] = np.transpose(cosA)
+    r2[:, 2] = np.transpose(-sinA)
+    r3 = np.zeros((NAngles, 3))
+    r3[:, 1] = np.transpose(sinA)
+    r3[:, 2] = np.transpose(cosA)
+    y_rot = np.dot(r2, Ps_aligned)
+    z_rot = np.dot(r3, Ps_aligned)
+    for i in range(NAngles):
+        p = np.append(y_rot[i, :], z_rot[i, :])
+        p = np.reshape(p, (2, len(Ps.T)))
         # Bin the point cloud projected onto the other two axes
-        H, xedges, yedges = np.histogram2d(Ps_rotated[1,:], Ps_rotated[2,:], bins=Dim, range = [[-Extent, Extent],[-Extent, Extent]]) 
+        H, xedges, yedges = np.histogram2d(p[0,:], p[1,:], bins=Dim, range = [[-Extent, Extent],[-Extent, Extent]]) 
         hist = hist + H # sum images
+    print hist
     fig1 = plt.figure()
     plt.pcolormesh(xedges, yedges, hist)
     plt.show() # display spin image
@@ -314,7 +324,6 @@ def compareHistsChiSquared(AllHists):
             D[i][j] = 0.5*summation # scale & assign distance value for ij
     return D
 
-
 #Purpose: To compute the 1D Earth mover's distance between a set
 #of histograms (note that this only makes sense for 1D histograms)
 #Inputs: AllHists (K x N matrix of histograms, where K is the length
@@ -332,7 +341,7 @@ def compareHistsEMD1D(AllHists):
             hci= np.cumsum(pc1)
             hcj= np.cumsum(pc2)
             emd = np.sum(np.absolute(np.subtract(hci,hcj)))
-            D[i][j] = emd 
+            D[i][j] = emd
     return D
 
 
@@ -402,49 +411,15 @@ def getPrecisionRecall(D, NPerClass = 10):
 
 
 if __name__ == '__main__':
-    #NRandSamples = 10000 #You can tweak this number
-    #np.random.seed(100) #For repeatable results randomly sampling
-    #Load in and sample all meshes
-    #PointClouds = []
-    #Normals = []
-    #for i in range(len(POINTCLOUD_CLASSES)):
-    #for i in range(1):
-        #print "LOADING CLASS %i of %i..."%(i, len(POINTCLOUD_CLASSES))
-        #PCClass = []
-        #for j in range(NUM_PER_CLASS):
-        #for j in range(3):
-            #m = PolyMesh()
-            #filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
-            #print "Loading ", filename 
-            #m.loadOffFileExternal(filename)
-            #(Ps, Ns) = samplePointCloud(m, NRandSamples)
-            #PointClouds.append(Ps)
-            #Normals.append(Ns)
-    #Ps0 = PointClouds[0]
-    #Ps1 = PointClouds[1] 
-    #Ps2 = PointClouds[2] 
-    #DMax = 3 
-    #NBins = 4
-    #Samples = 100
-    #ist0 = getD2Histogram(Ps0, Normals[0], DMax, NBins, NSamples) 
-    #print hist0
-    #hist1 = getD2Histogram(Ps1, Normals[1], DMax, NBins, NSamples) 
-    #print hist1
-    #hist2 = getD2Histogram(Ps2, Normals[0], DMax, NBins, NSamples) 
-    #print hist2
-    #AllHists = np.zeros((4,3))
-    #AllHists [:,0] = hist0
-    #AllHists [:,1] = hist1
-    #AllHists [:,2] = hist2
-    #D = compareHistsEMD1D(AllHists)
-    #print D
-   #m = PolyMesh()
-   #m.loadFile("models_off/biplane0.off") #Load a mesh
-   #(Ps, Ns) = samplePointCloud(m, 10000) #Sample 20,000 points and associated normals
-   #exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
+   m = PolyMesh()
+   m.loadFile("models_off/biplane0.off") #Load a mesh
+   (Ps, Ns) = samplePointCloud(m, 20000) #Sample 20,000 points and associated normals
+   exportPointCloud(Ps, Ns, "biplane.pts") #Export point cloud
 
    #TESTING GET-SHAPE-HISTOGRAM
    #histogram1 = getShapeHistogram(Ps, Ns, 21, 3)
+   #print histogram1
+   #print bins1
    #plt.bar(bins1, histogram1, width=3.0/21*0.9)
    #plt.show()
 
@@ -466,43 +441,158 @@ if __name__ == '__main__':
    #RMax = 2
    #SPoints = getSphereSamples() # res is auto-set to 2 (66 sample points)
    #histogram = getShapeShellHistogram(Ps, Ns, NShells, RMax, SPoints)
+   #print histogram
+   #print bins
    #plt.bar(bins, histogram, width =  float(RMax)/NShells/SPoints.shape[1]*0.9)
    #plt.show()
-   
+
    #TESTING GET-SPIN-IMAGE
-   #NAngles = 720
-   #Extent = 2
-   #Dim = 1000
-   #histogram = getSpinImage(Ps, Ns, NAngles, Extent, Dim)
+   NAngles = 360
+   Extent = 1.8
+   Dim = 180
+   histogram = getSpinImage(Ps, Ns, NAngles, Extent, Dim)
+   sys.exit()
    
-#SPoints = getSphereSamples(2)
+   NRandSamples = 10000 #You can tweak this number
+
+   #np.random.seed(100) #For repeatable results randomly sampling
+
+
+   #Load in and sample all meshes
+   PointClouds = []
+   Normals = []
+   for i in range(len(POINTCLOUD_CLASSES)):
+      print "LOADING CLASS %i of %i..."%(i, len(POINTCLOUD_CLASSES))
+      PCClass = []
+      for j in range(NUM_PER_CLASS):
+          m = PolyMesh()
+          filename = "models_off/%s%i.off"%(POINTCLOUD_CLASSES[i], j)
+          print "Loading ", filename
+          m.loadOffFileExternal(filename)
+          (Ps, Ns) = samplePointCloud(m, NRandSamples)
+          PointClouds.append(Ps)
+          Normals.append(Ns)
+
+SPoints = getSphereSamples(2)
+
+
+
 #HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 100, 2, 40)
-#HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
-#HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
-#HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
+HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
+HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
+HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
 
 #DSpin = compareHistsEuclidean(HistsSpin)
-#DEGI = compareHistsEuclidean(HistsEGI)
-#DA3 = compareHistsEuclidean(HistsA3)
-#DD2 = compareHistsEuclidean(HistsD2)
+DEGI = compareHistsEuclidean(HistsEGI)
+DA3 = compareHistsEuclidean(HistsA3)
+DD2 = compareHistsEuclidean(HistsD2)
 
 #PRSpin = getPrecisionRecall(DSpin)
-#PREGI = getPrecisionRecall(DEGI)
-#PRA3 = getPrecisionRecall(DA3)
-#PRD2 = getPrecisionRecall(DD2)
+PREGI = getPrecisionRecall(DEGI)
+PRA3 = getPrecisionRecall(DA3)
+PRD2 = getPrecisionRecall(DD2)
 
-#recalls = np.linspace(1.0/9.0, 1.0, 9)
-#plt.plot(recalls, PREGI, 'c', label='EGI')
-#plt.hold(True)
-##plt.plot(recalls, PRA3, 'k', label='A3')
-#plt.plot(recalls, PRD2, 'r', label='D2')
+recalls = np.linspace(1.0/9.0, 1.0, 9)
+plt.plot(recalls, PREGI, 'c', label='EGI')
+plt.hold(True)
+plt.plot(recalls, PRA3, 'k', label='A3')
+plt.plot(recalls, PRD2, 'r', label='D2')
 #plt.plot(recalls, PRSpin, 'b', label='Spin')
-#plt.xlabel('Recall')
-#plt.ylabel('Precision')
-#plt.legend()
-#plt.show()
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.legend()
+plt.show()
 
-    #TODO: Finish this, run experiments.  Also in the above code, you might
-    #just want to load one point cloud and test your histograms on that first
-    #so you don't have to wait for all point clouds to load when making
-    #minor tweaks
+
+## Graph for Basic Shell Histogram
+
+#Create precision recall graphs which show the effect of choosing
+#different numbers of bins for the basic shell histogram
+
+# HistBasic10 = makeAllHistograms(PointClouds, Normals, getShapeHistogram, 10, 5)
+# HistBasic100 = makeAllHistograms(PointClouds, Normals, getShapeHistogram, 100, 5)
+# HistBasic1000 = makeAllHistograms(PointClouds, Normals, getShapeHistogram, 1000, 5)
+# HistBasic10000 = makeAllHistograms(PointClouds, Normals, getShapeHistogram, 10000, 5)
+#
+# DHistBasic10 = compareHistsEuclidean(HistBasic10)
+# DHistBasic100 = compareHistsEuclidean(HistBasic100)
+# DHistBasic1000 = compareHistsEuclidean(HistBasic1000)
+# DHistBasic10000 = compareHistsEuclidean(HistBasic10000)
+#
+# PRHistBasic10 = getPrecisionRecall(DHistBasic10)
+# PRHistBasic100 = getPrecisionRecall(DHistBasic100)
+# PRHistBasic1000 = getPrecisionRecall(DHistBasic1000)
+# PRHistBasic10000 = getPrecisionRecall(DHistBasic10000)
+#
+#
+# recalls = np.linspace(1.0/9.0, 1.0, 9)
+# plt.plot(recalls, PRHistBasic10, 'c', label='10 Shells')
+# plt.hold(True)
+# plt.plot(recalls, PRHistBasic100, 'k', label='100 Shells')
+# plt.plot(recalls, PRHistBasic1000, 'r', label='1000 Shells')
+# plt.plot(recalls, PRHistBasic10000, 'b', label='10000 Shells')
+# plt.xlabel('Recall')
+# plt.ylabel('Precision')
+# plt.title('getShapeHistogram (Basic) Different number of Shells/Bins')
+# plt.legend()
+# plt.show()
+
+## Graph for D2 Histogram
+# HistsD22 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100)
+# HistsD23 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 1000)
+# HistsD24 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 10000)
+# HistsD25 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
+#
+#
+# DHistsD22 = compareHistsEuclidean(HistsD22)
+# DHistsD23 = compareHistsEuclidean(HistsD23)
+# DHistsD24 = compareHistsEuclidean(HistsD24)
+# DHistsD25 = compareHistsEuclidean(HistsD25)
+#
+# PRHistD22 = getPrecisionRecall(DHistsD22)
+# PRHistD23 = getPrecisionRecall(DHistsD23)
+# PRHistD24 = getPrecisionRecall(DHistsD24)
+# PRHistD25 = getPrecisionRecall(DHistsD25)
+#
+#
+# recalls = np.linspace(1.0/9.0, 1.0, 9)
+# plt.plot(recalls, PRHistD22, 'c', label='100 Samples')
+# plt.hold(True)
+# plt.plot(recalls, PRHistD23, 'k', label='1000 Samples')
+# plt.plot(recalls, PRHistD24, 'r', label='10000 Samples')
+# plt.plot(recalls, PRHistD25, 'b', label='100000 Samples')
+# plt.xlabel('Recall')
+# plt.ylabel('Precision')
+# plt.title('getD2Histogram Varying number of Distance Points Sampled (Random Seed = 100)')
+# plt.legend()
+# plt.show()
+
+## Graph for Distance Metrics
+# HistD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
+#
+# DEucl = compareHistsEuclidean(HistD2)
+# DCos = compareHistsCosine(HistD2)
+# DChi = compareHistsChiSquared(HistD2)
+# DEMD1D = compareHistsEMD1D(HistD2)
+#
+# PRDEucl = getPrecisionRecall(DEucl)
+# PRDCos = getPrecisionRecall(DCos)
+# PRDChi = getPrecisionRecall(DChi)
+# PRDEMD1D = getPrecisionRecall(DEMD1D)
+#
+# recalls = np.linspace(1.0/9.0, 1.0, 9)
+# plt.plot(recalls, PRDEucl, 'c', label='Euclidean')
+# plt.hold(True)
+# plt.plot(recalls, PRDCos, 'k', label='Cosine')
+# plt.plot(recalls, PRDChi, 'r', label='Chi Squared')
+# plt.plot(recalls, PRDEMD1D, 'b', label='DEMD1D')
+# plt.xlabel('Recall')
+# plt.ylabel('Precision')
+# plt.title('getD2Histogram with Varying Distance Metrics')
+# plt.legend()
+# plt.show()
+
+#TODO: Finish this, run experiments.  Also in the above code, you might
+#just want to load one point cloud and test your histograms on that first
+#so you don't have to wait for all point clouds to load when making
+#minor tweaks
