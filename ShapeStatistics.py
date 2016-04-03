@@ -449,11 +449,11 @@ if __name__ == '__main__':
    #plt.show()
 
    #TESTING GET-SPIN-IMAGE
-   NAngles = 4#720
-   Extent = 2#2
-   Dim = 2#1000
-   histogram = getSpinImage(Ps, Ns, NAngles, Extent, Dim)
-
+   # NAngles = 4#720
+   # Extent = 2#2
+   # Dim = 2#1000
+   # histogram = getSpinImage(Ps, Ns, NAngles, Extent, Dim)
+   #
    NRandSamples = 10000 #You can tweak this number
 
    #np.random.seed(100) #For repeatable results randomly sampling
@@ -476,48 +476,59 @@ if __name__ == '__main__':
 
 SPoints = getSphereSamples(2)
 
-# ##Graph for all Descriptor methods
+##Graph for all Descriptor methods
 #
-# #HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 360, 1.8, 180) #100, 2, 40
-# HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
-# HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
-# HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
-# HistShape = makeAllHistograms(PointClouds, Normals, getShapeHistogram, 10000, 3)
-# HistShapeSect = makeAllHistograms(PointClouds, Normals, getShapeShellHistogram, 100000, 3, SPoints)
-# HistShapePCA = makeAllHistograms(PointClouds, Normals, getShapeHistogramPCA, 100000, 3)
-#
-# #DSpin = compareHistsEuclidean(HistsSpin)
-# DEGI = compareHistsEuclidean(HistsEGI)
-# DA3 = compareHistsEuclidean(HistsA3)
-# DD2 = compareHistsEuclidean(HistsD2)
-# DShp = compareHistsEuclidean(HistShape)
-# DShpSct = compareHistsEuclidean(HistShapeSect)
-# DShpPCA = compareHistsEuclidean(HistShapePCA)
-#
-# #PRSpin = getPrecisionRecall(DSpin)
-# PREGI = getPrecisionRecall(DEGI)
-# PRA3 = getPrecisionRecall(DA3)
-# PRD2 = getPrecisionRecall(DD2)
-# PRShp = getPrecisionRecall(DShp)
-# PRShpSct = getPrecisionRecall(DShpSct)
-# PRShpPCA = getPrecisionRecall(DShpPCA)
-#
-#
-# recalls = np.linspace(1.0/9.0, 1.0, 9)
-# plt.plot(recalls, PREGI, 'c', label='EGI')
-# plt.hold(True)
-# plt.plot(recalls, PRA3, 'k', label='A3')
-# plt.plot(recalls, PRD2, 'r', label='D2')
-# plt.plot(recalls, PRShp, 'b', label='ShapeShell')
-# plt.plot(recalls, PRShpSct, 'y', label='ShapeShellSector')
-# plt.plot(recalls, PRShpPCA, 'm', label='ShapeShellPCA')
-# #plt.plot(recalls, PRSpin, 'b', label='Spin')
-#
-# plt.xlabel('Recall')
-# plt.ylabel('Precision')
-# plt.title('Recall Graph or all Descriptors')
-# plt.legend()
-# plt.show()
+HistsSpin = makeAllHistograms(PointClouds, Normals, getSpinImage, 360, 1.8, 180) #100, 2, 40
+HistsEGI = makeAllHistograms(PointClouds, Normals, getEGIHistogram, SPoints)
+HistsA3 = makeAllHistograms(PointClouds, Normals, getA3Histogram, 30, 100000)
+HistsD2 = makeAllHistograms(PointClouds, Normals, getD2Histogram, 3.0, 30, 100000)
+HistShape = makeAllHistograms(PointClouds, Normals, getShapeHistogram, 1000, 3)
+HistShapeSect = makeAllHistograms(PointClouds, Normals, getShapeShellHistogram, 1000, 3, SPoints)
+#HistShapePCA = makeAllHistograms(PointClouds, Normals, getShapeHistogramPCA, 10000, 3)
+
+#print "here -2"
+DSpin = compareHistsEuclidean(HistsSpin)
+#print "here -1"
+DEGI = compareHistsEuclidean(HistsEGI)
+#print "here 0"
+DA3 = compareHistsEuclidean(HistsA3)
+#print "here 00"
+DD2 = compareHistsEuclidean(HistsD2)
+#print "here 1"
+DShp = compareHistsEuclidean(HistShape)
+#print "here 2"
+DShpSct = compareHistsEuclidean(HistShapeSect)
+#print "here 2a"
+#DShpPCA = compareHistsEuclidean(HistShapePCA)
+
+#print "here 3"
+PRSpin = getPrecisionRecall(DSpin)
+PREGI = getPrecisionRecall(DEGI)
+PRA3 = getPrecisionRecall(DA3)
+PRD2 = getPrecisionRecall(DD2)
+#print "here 4"
+PRShp = getPrecisionRecall(DShp)
+PRShpSct = getPrecisionRecall(DShpSct)
+#PRShpPCA = getPrecisionRecall(DShpPCA)
+
+#print "here 5"
+
+recalls = np.linspace(1.0/9.0, 1.0, 9)
+plt.plot(recalls, PREGI, 'c', label='EGI')
+plt.hold(True)
+plt.plot(recalls, PRSpin, 'b', label='Spin')
+plt.plot(recalls, PRA3, 'k', label='A3')
+plt.plot(recalls, PRD2, 'r', label='D2')
+plt.plot(recalls, PRShp, 'm', label='ShapeShell')
+plt.plot(recalls, PRShpSct, 'y', label='ShapeShellSector')
+#plt.plot(recalls, PRShpPCA, 'g', label='ShapeShellPCA')
+plt.xlabel('Recall')
+plt.ylabel('Precision')
+plt.title('Recall Graph for all Descriptors (random seeds = 100)')
+plt.legend()
+plt.show()
+
+#print "end"
 
 ## Graph for Basic Shell Histogram
 
@@ -612,33 +623,31 @@ SPoints = getSphereSamples(2)
 
 
 
-# Graph for Distance Metrics EGI
-HistEG = makeAllHistograms(PointClouds, Normals, getEGIHistogram, getSphereSamples(2))
-
-DEucl = compareHistsEuclidean(HistEG)
-DCos = compareHistsCosine(HistEG)
-DChi = compareHistsChiSquared(HistEG)
-DEMD1D = compareHistsEMD1D(HistEG)
-
-PRDEucl = getPrecisionRecall(DEucl)
-PRDCos = getPrecisionRecall(DCos)
-PRDChi = getPrecisionRecall(DChi)
-PRDEMD1D = getPrecisionRecall(DEMD1D)
-
-
-recalls = np.linspace(1.0/9.0, 1.0, 9)
-plt.plot(recalls, PRDEucl, 'c', label='Euclidean')
-plt.hold(True)
-plt.plot(recalls, PRDCos, 'k', label='Cosine')
-plt.plot(recalls, PRDChi, 'r', label='Chi Squared')
-plt.plot(recalls, PRDEMD1D, 'b', label='DEMD1D')
-plt.xlabel('Recall')
-plt.ylabel('Precision')
-plt.title('getEGIHistogram (res 2) with Varying Distance Metrics')
-plt.legend()
-plt.show()
-
-
+# # Graph for Distance Metrics EGI
+# HistEG = makeAllHistograms(PointClouds, Normals, getEGIHistogram, getSphereSamples(2))
+#
+# DEucl = compareHistsEuclidean(HistEG)
+# DCos = compareHistsCosine(HistEG)
+# DChi = compareHistsChiSquared(HistEG)
+# DEMD1D = compareHistsEMD1D(HistEG)
+#
+# PRDEucl = getPrecisionRecall(DEucl)
+# PRDCos = getPrecisionRecall(DCos)
+# PRDChi = getPrecisionRecall(DChi)
+# PRDEMD1D = getPrecisionRecall(DEMD1D)
+#
+#
+# recalls = np.linspace(1.0/9.0, 1.0, 9)
+# plt.plot(recalls, PRDEucl, 'c', label='Euclidean')
+# plt.hold(True)
+# plt.plot(recalls, PRDCos, 'k', label='Cosine')
+# plt.plot(recalls, PRDChi, 'r', label='Chi Squared')
+# plt.plot(recalls, PRDEMD1D, 'b', label='DEMD1D')
+# plt.xlabel('Recall')
+# plt.ylabel('Precision')
+# plt.title('getEGIHistogram (res 2) with Varying Distance Metrics')
+# plt.legend()
+# plt.show()
 
 
 ## Recall Graph for EGI
