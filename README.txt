@@ -34,13 +34,43 @@ the result precision array was generated.
 
 -------
 
-Recall Graph Results 
+For the graph results we observe that the precision curves on these graphs that
+are closest to the value precision (y) = 1 i.e. whatever curve maximizes the
+area under the curve were better i.e. offered better statistics.
+ This is because higher precision values translate to better discernment between
+ shapes in the histograms and similarity matrix. With a better way of separating
+ shapes, we are presented with less uncertainty in picking our shapes(better
+ statistics)
 
 
-In this graph by far 100,000 samples is better than 100!  The best precision
- recall graphs are the ones with the highest precision values across the whole
-  graph.  So the ones that are closest to the line precision(recall) = 1,
-  or alternatively the ones with the most area.  Graphs with higher precision
-   values correspond to statistics which are more discerning; that is, they
-    correctly separate out shapes in the histogram space better, so that
-     there are fewer confusions/mix-ups
+
+Recall Graph Results:
+
+6Descriptors.png / 4Descriptors.png:
+Create precision recall graphs comparing every descriptor you implemented with
+reasonable parameter choices for each one.
+
+
+getShapeHist.png:
+Create precision recall graphs which show the effect of choosing different
+numbers of bins for the basic shell histogram
+
+getD2Hist.png:
+Create precision recall graphs which show the effect of choosing different
+numbers of random samples for the D2 histogram
+
+getD2DistanceMetrics.png / EGIDistanceMetrics.png:
+Create at least two precision recall graphs using different metrics on the
+same descriptor and showing the effect. 
+
+EGI.png:
+At least one other precision recall graph;how does the number of sphere sampled
+ normal directions affect the results for the extended Gaussian Image.
+
+
+
+
+
+
+
+     EGI.png
