@@ -61,7 +61,11 @@ histograms.
 #############################################################################
 getShapeHistogramPCA
 
-GRAY
+A for-loop was used to organize the point cloud into separate point clouds 
+according to distance from the centroid, and the function doPCA was used to 
+find the eigenvalues and eigenvectors of each shell. Unfortunately, I wasn't
+able to figure out how to translate this data into a working histogram, but I
+was able to store the eigenvalues for each sector in a 2D array.
 #############################################################################
 
 #############################################################################
@@ -93,7 +97,11 @@ permutation and the mod function.
 #############################################################################
 getEGIHistogram
 
-GRAY
+doPCA was used to calculate the eigenvectors of Ps. To align the normal vectors
+of the point cloud, the matrix of row eigenvectors (organized in decreasing order
+by eigenvalue) is multiplied on the right by Ns. Then we multiply the transpose 
+of the aligned matrix by SPoints and take the argmax along the rows to find
+the values for the histogram.
 #############################################################################
 
 #############################################################################
